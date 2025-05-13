@@ -1,12 +1,9 @@
 Modifies [Vintage Story](https://www.vintagestory.at/).
 
-TODO: Update this document to reflect current code status
-**API still unstable until a 1.0 release!**
-
 The basic idea:
 * You write a json file describing what genes and alleles exist, and how likely an animal is to have them
 * Genelib handles the backend parts: Initializing and storing gene data for entities, and children inheriting genes from parents
-* (API under development - this may soon have breaking changes) Genelib provides a few simple gene-based effects
+* Genelib provides a few simple gene-based effects
 * You will need to write code for more complicated effects like coat color genetics
 
 ### Genetics features
@@ -44,7 +41,7 @@ One interpreter is built-in, the Polygenes interpreter. This provides basic effe
 ### Entity Behaviors and AI tasks
 To get genetics to work right, you will have to add a few specific EntityBehaviors to your entity. By code, they are:
 
-"genelib.genetics": For having genes, what a shocker. Specify "genomeType" here. Serverside only.
+"genelib.genetics": For having genes, what a shocker. Specify "genomeType" here. Required serverside. Optionally can be included clientside, if you have a gene interpreter that should run on the client.
 
 "genelib.grow" replacing "grow": Makes baby animals keep their genes when they grow up.
 
