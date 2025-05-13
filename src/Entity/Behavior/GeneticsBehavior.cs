@@ -71,6 +71,12 @@ namespace Genelib {
                     }
                     Genome = new Genome(frequencies, heterogametic, random);
                     Genome.Mutate(GenelibConfig.MutationRate, random);
+                    if (!onFirstSpawn) {
+                        // Creating genetics for previously existing entity. Set genes to match phenotype.
+                        foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+                            interpreter.MatchPhenotype(this);
+                        }
+                    }
                     foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
                         interpreter.Finalize(Genome, frequencies, random);
                     }

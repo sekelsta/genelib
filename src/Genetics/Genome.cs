@@ -191,7 +191,7 @@ namespace Genelib {
                 return null;
             }
             if (maternal == null || paternal == null) {
-                throw new ArgumentException("Parent autosomal gene arrays should either both be null or both be non-null");
+                throw new ArgumentException("Parent xz gene arrays should either both be null or both be non-null");
             }
             int length = Math.Min(maternal.Length, paternal.Length);
             byte[] result = new byte[length];
@@ -291,6 +291,19 @@ namespace Genelib {
         public bool HomozygousXZ(string gene, string allele) {
             int geneID = Type.XZ.GeneID(gene);
             return HomozygousXZ(geneID, Type.XZ.AlleleID(geneID, allele));
+        }
+
+        public void SetAutosomal(string gene, int n, string allele) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
+            Autosomal(geneID, n, alleleID);
+        }
+
+        public void SetHomozygous(string gene, string allele) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
+            Autosomal(geneID, 0, alleleID);
+            Autosomal(geneID, 1, alleleID);
         }
 
         public void SetNotHomozygous(string gene, string avoidAllele, AlleleFrequencies frequencies, string fallbackAllele) {
