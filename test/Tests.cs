@@ -11,5 +11,12 @@ namespace Genelib.Test {
             SexDetermination result = SexDeterminationExtensions.Parse("xy");
             Assert.AreEqual(SexDetermination.XY, result);
         }
+
+        [Test]
+        public void SexDetermination_ParseZW()
+        {
+            SexDetermination result = SexDeterminationExtensions.Parse("zw");
+            Assert.AreEqual(SexDetermination.ZW, result);
+        }
     }
 }
