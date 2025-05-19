@@ -73,7 +73,7 @@ namespace Genelib {
             if (attributes.KeyExists("initializers")) {
                 JsonObject initialization = attributes["initializers"];
                 foreach (JProperty jp in ((JObject) initialization.Token).Properties()) {
-                    initializers[jp.Name] = new GeneInitializer(this, new JsonObject(jp.Value));
+                    initializers[jp.Name] = new GeneInitializer(this, jp.Name, new JsonObject(jp.Value));
                 }
             }
             if (attributes.KeyExists("sexdetermination")) {
@@ -117,7 +117,7 @@ namespace Genelib {
             return initializers[name];
         }
 
-        public AlleleFrequencies ChooseInitializer(string[] initializerNames, ClimateCondition climate, int y, Random random) {
+        public GeneInitializer ChooseInitializer(string[] initializerNames, ClimateCondition climate, int y, Random random) {
             List<GeneInitializer> valid = new List<GeneInitializer>();
             // If no list provided, default to all being valid
             if (initializerNames == null) {
@@ -133,7 +133,7 @@ namespace Genelib {
             if (valid.Count == 0) {
                 return null;
             }
-            return valid[random.Next(valid.Count)].Frequencies;
+            return valid[random.Next(valid.Count)];
         }
 
         private void addIfValid(List<GeneInitializer> valid, ClimateCondition climate, int y, GeneInitializer ini) {

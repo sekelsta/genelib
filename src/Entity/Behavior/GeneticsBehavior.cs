@@ -54,25 +54,22 @@ namespace Genelib {
             return new string[] { s };
         }
 
-        public override void AfterInitialized(bool onFirstSpawn) {
+        public override void AfterInitialized(bool onRuntimeSpawn) {
             if (entity.World.Side == EnumAppSide.Server) {
                 if (Genome == null) {
                     Random random = entity.World.Rand;
                     bool heterogametic = GenomeType.SexDetermination.Heterogametic(entity.IsMale());
                     AlleleFrequencies frequencies = null;
-                    if (onFirstSpawn) {
-                        BlockPos blockPos = entity.Pos.AsBlockPos;
-                        ClimateCondition climate = entity.Api.World.BlockAccessor.GetClimateAt(blockPos);
-                        frequencies = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random)
-                            ?? defaultFrequencies;
-                    }
-                    else {
-                        frequencies = defaultFrequencies;
-                    }
+                    BlockPos blockPos = entity.Pos.AsBlockPos;
+                    ClimateCondition climate = entity.Api.World.BlockAccessor.GetClimateAt(blockPos);
+                    frequencies = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random).Frequencies
+                        ?? defaultFrequencies;
                     Genome = new Genome(frequencies, heterogametic, random);
                     Genome.Mutate(GenelibConfig.MutationRate, random);
-                    if (!onFirstSpawn) {
-                        // Creating genetics for previously existing entity. Set genes to match phenotype.
+                    if (!onRuntimeSpawn) {
+                        // Note the API does not provide a good way to distinguish between loading from save or spawning 
+                        // at worldgen. So assume we are 
+                        // creating genetics for a previously existing entity. Set genes to match phenotype.
                         foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
                             interpreter.MatchPhenotype(this);
                         }

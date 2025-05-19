@@ -6,6 +6,7 @@ using Vintagestory.API.Common.Entities;
 
 namespace Genelib {
     public class GeneInitializer {
+        public readonly string Name;
         private GenomeType type;
         private JsonObject attributes;
         private AlleleFrequencies frequencies;
@@ -26,8 +27,9 @@ namespace Genelib {
             }
         }
 
-        public GeneInitializer(GenomeType type, JsonObject attributes) {
+        public GeneInitializer(GenomeType type, string name, JsonObject attributes) {
             this.type = type;
+            Name = name;
             this.attributes = attributes;
             if (attributes.KeyExists("conditions")) {
                 JsonObject conditions = attributes["conditions"];
