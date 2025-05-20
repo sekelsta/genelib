@@ -4,8 +4,8 @@
   "name": "Genelib",
   "description" : "Calculates genetic inheritance for other mods.",
   "authors": ["sekelsta"],
-  "version": "1.0.2",
+  "version": "1.0.3",
   "dependencies": { 
-	"game": "",
+	"game": "1.20.11-rc.1",
   }
 }
