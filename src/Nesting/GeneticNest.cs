@@ -14,53 +14,31 @@ using Vintagestory.ServerMods.NoObf;
 using Genelib.Extensions;
 
 namespace Genelib {
-    public class GeneticNest : BlockEntityDisplay, IAnimalNest {
+    public class GeneticNest : BlockEntityHenBox {
         public AssetLocation[] suitableFor;
-        public Entity occupier;
-        public InventoryGeneric inventory;
 
         protected bool WasOccupied = false;
-        protected bool IsOccupiedClientside = false;
         protected long LastOccupier = -1;
         protected double LastUpdateHours = -1;
-
-        public override InventoryBase Inventory => inventory;
-        public string inventoryClassName = "genelib.nest";
-        public override string InventoryClassName => inventoryClassName;
-
-        public Vec3d Position => Pos.ToVec3d().Add(0.5, 0.5, 0.5);
-        public string Type => "nest";
 
         public double decayHours;
         public double DecayStartHours = double.MaxValue;
 
         public bool Permenant => decayHours <= 0;
 
-        public GeneticNest() {
-            container = new NestContainer(() => Inventory, "inventory");
-        }
-
-        public bool IsSuitableFor(Entity entity) {
+        public override bool IsSuitableFor(Entity entity) {
             return entity is EntityAgent && suitableFor.Any(name => entity.WildCardMatch(name));
-        }
-
-        public bool Occupied(Entity entity) {
-            return occupier != null && occupier != entity;
         }
 
         public bool Occupied() {
             return occupier != null && occupier.Alive;
         }
 
-        public void SetOccupier(Entity entity) {
-            if (occupier == entity) {
-                return;
-            }
-            occupier = entity;
+        public override void SetOccupier(Entity entity) {
+            base.SetOccupier(entity);
             if (entity != null) {
                 LastOccupier = entity.UniqueID();
             }
-            MarkDirty();
         }
 
         public bool ContainsRot() {
@@ -80,14 +58,14 @@ namespace Genelib {
             return code != null && code.Domain == "game" && code.Path == "rot";
         }
 
-        public float DistanceWeighting {
+        public override float DistanceWeighting {
             get {
                 int numEggs = CountEggs();
                 return numEggs == 0 ? 2 : 3 / (numEggs + 2);
             }
         }
 
-        public bool TryAddEgg(Entity entity, string chickCode, double incubationDays) {
+        public override bool TryAddEgg(Entity entity, string chickCode, double incubationDays) {
             // TO_OPTIMIZE: Avoid looping over the inventory twice
             if (Full()) {
                 return false;
@@ -143,71 +121,18 @@ namespace Genelib {
             throw new ArgumentException("Can't add egg to full nest!");
         }
 
-        public int CountEggs() {
-            int count = 0;
-            for (int i = 0; i < inventory.Count; ++i) {
-                if (!inventory[i].Empty) {
-                    ++count;
-                }
-            }
-            return count;
-        }
-
         public override void Initialize(ICoreAPI api) {
-            inventoryClassName = Block.Attributes["inventoryClassName"]?.AsString();
-            int capacity = Block.Attributes["quantitySlots"]?.AsInt(1) ?? 1;
-            if (inventory == null) {
-                CreateInventory(capacity, api);
-            }
-            else if (capacity != inventory.Count) {
-                api.Logger.Warning("Nest " + Block.Code + " loaded with " + inventory.Count + " capacity when it should be " + capacity + ".");
-                InventoryGeneric oldInv = inventory;
-                CreateInventory(capacity, api);
-                for (int i = 0; i < capacity && i < oldInv.Count; ++i) {
-                    if (!oldInv[i].Empty) {
-                        inventory[i].Itemstack = oldInv[i].Itemstack;
-                        inventory.DidModifyItemSlot(inventory[i]);
-                    }
-                }
-            }
             base.Initialize(api);
 
             decayHours = Block.Attributes?["decayHours"]?.AsDouble(0) ?? 0;
 
-            (container as NestContainer).PerishRate = Block.Attributes?["perishRate"]?.AsFloat(1) ?? 1;
+            (container as ConstantPerishRateContainer).PerishRate = Block.Attributes?["perishRate"]?.AsFloat(1) ?? 1;
             if (LastUpdateHours == -1) {
                 LastUpdateHours = Api.World.Calendar.TotalHours;
             }
 
             string[] suitable = Block.Attributes?["suitableFor"]?.AsArray<string>();
             suitableFor = suitable.Select(name => AssetLocation.Create(name, Block.Code.Domain)).ToArray();
-
-            if (api.Side == EnumAppSide.Server) {
-                IsOccupiedClientside = false;
-                api.ModLoader.GetModSystem<POIRegistry>().AddPOI(this);
-                RegisterGameTickListener(SlowTick, 12000);
-                SlowTick(0);
-            }
-        }
-
-        private void CreateInventory(int capacity, ICoreAPI api) {
-            inventory = new InventoryGeneric(capacity, InventoryClassName, Pos?.ToString(), api);
-            inventory.Pos = this.Pos;
-            inventory.SlotModified += OnSlotModified;
-        }
-
-        public override void OnBlockRemoved() {
-            base.OnBlockRemoved(); // Unregisters the tick listener
-            if (Api.Side == EnumAppSide.Server) {
-                Api.ModLoader.GetModSystem<POIRegistry>().RemovePOI(this);
-            }
-        }
-
-        public override void OnBlockUnloaded() {
-            base.OnBlockUnloaded();
-            if (Api?.Side == EnumAppSide.Server) {
-                Api.ModLoader.GetModSystem<POIRegistry>().RemovePOI(this);
-            }
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree) {
@@ -216,26 +141,18 @@ namespace Genelib {
             tree.SetDouble("decayStartHours", DecayStartHours);
             tree.SetBool("wasOccupied", WasOccupied);
             tree.SetLong("lastOccupier", LastOccupier);
-            tree.SetBool("isOccupied", occupier != null && occupier.Alive);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving) {
+            base.FromTreeAttributes(tree, worldForResolving);
             WasOccupied = tree.GetBool("wasOccupied");
             LastUpdateHours = tree.GetDouble("lastUpdateHours");
             DecayStartHours = tree.GetDouble("decayStartHours");
-            IsOccupiedClientside = tree.GetBool("isOccupied");
-
-            TreeAttribute invTree = (TreeAttribute) tree["inventory"];
-            if (inventory == null) {
-                int capacity = invTree.GetInt("qslots");
-                CreateInventory(capacity, worldForResolving.Api);
-            }
             LastOccupier = tree.GetLong("lastOccupier", -1);
-            base.FromTreeAttributes(tree, worldForResolving);
             RedrawAfterReceivingTreeAttributes(worldForResolving);
         }
 
-        protected void SlowTick(float dt) {
+        protected override void On1500msTick(float dt) {
             bool anyEggs = false;
             bool anyRot = false;
             for (int i = 0; i < inventory.Count; ++i) {
@@ -313,14 +230,11 @@ namespace Genelib {
         }
 
         public bool CanHoldItem(ItemStack stack) {
+            return stack != null;
             if (stack?.Collectible.Attributes == null) {
                 return false;
             }
             return stack.Collectible.Attributes["nestitem"].AsBool(false);
-        }
-
-        private void OnSlotModified(int slot) {
-            MarkDirty();
         }
 
         public bool OnInteract(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel) {
@@ -441,28 +355,6 @@ namespace Genelib {
                 }
                 info.AppendLine(Lang.Get("detailedanimals:blockinfo-suitable-nestbox", string.Join(", ", creatureNames)));
             }
-        }
-
-        protected override float[][] genTransformationMatrices() {
-            ModelTransform[] transforms = Block.Attributes["displayTransforms"]?.AsArray<ModelTransform>();
-            if (transforms.Length != DisplayedItems) {
-                capi.Logger.Warning("Display transforms for " + Block.Code + " block entity do not match number of displayed items.");
-            }
-
-            float[][] tfMatrices = new float[transforms.Length][];
-            for (int i = 0; i < transforms.Length; ++i) {
-                Vec3f off = transforms[i].Translation;
-                Vec3f rot = transforms[i].Rotation;
-                tfMatrices[i] = new Matrixf()
-                    .Translate(off.X, off.Y, off.Z)
-                    .Translate(0.5f, 0, 0.5f)
-                    .RotateX(rot.X * GameMath.DEG2RAD)
-                    .RotateY(rot.Y * GameMath.DEG2RAD)
-                    .RotateZ(rot.Z * GameMath.DEG2RAD)
-                    .Translate(-0.5f, 0, -0.5f)
-                    .Values;
-            }
-            return tfMatrices;
         }
     }
 }
