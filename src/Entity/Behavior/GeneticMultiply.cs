@@ -137,7 +137,6 @@ namespace Genelib {
             }
             Litter = litterData;
             if (litterData.value.Length == 0) {
-                // TODO: Consider trying again
                 SetNotPregnant();
             }
 
