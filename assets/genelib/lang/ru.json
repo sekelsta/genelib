@@ -1,4 +1,18 @@
 {
     "block-nestbox": "Гнездо",
     "block-nest-ground": "Гнездо на земле",
+    "gui-animalinfo-note": "Примечание:",
+    "gui-animalinfo-preventbreeding": "Предотвращенное размножение",
+    "gui-animalinfo-breedingprevented": "Предотвращение размножения",
+    "gui-animalinfo-inbreedingcoefficient": "Коэф. инбридинга: {0}%",
+    "gui-animalinfo-inbreedingcoefficient-desc": "Коэф. инбридинга (вероятен)",
+    "gui-animalinfo-father": "Отец: {0}",
+    "gui-animalinfo-mother": "Мать: {0}",
+    "gui-animalinfo-foster": "Приёмная мать: {0}",
+    "gui-animalinfo-foundation": "Основа",
+    "gui-animalinfo-unknownfather": "Неизвестно",
+    "gui-animalinfo-unknownmother": "Неизвестно",
+    "gui-animalinfo-tab-info": "Информация",
+    "gui-animalinfo-tab-status": "Статус",
+    "gui-hotkey-animalinfo": "Открыть информацию животного",
 }

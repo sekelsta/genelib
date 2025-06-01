@@ -1,4 +1,10 @@
 {
 	"block-nestbox": "Pondoire",
     "block-nest-ground": "Nid au sol",
+    "gui-animalinfo-note": "Note :",
+    "gui-animalinfo-preventbreeding": "Empêcher la reproduction",
+    "gui-animalinfo-breedingprevented": "Reproduction empêchée",
+    "gui-animalinfo-tab-info": "Infos",
+    "gui-animalinfo-tab-status": "État",
+    "gui-hotkey-animalinfo": "Ouvrir le profil de l'animal",
 }

@@ -1,3 +1,4 @@
+using Genelib.Network;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -44,6 +45,7 @@ namespace Genelib
             api.RegisterEntityBehaviorClass(EntityBehaviorGenetics.Code, typeof(EntityBehaviorGenetics));
             api.RegisterEntityBehaviorClass(GeneticMultiply.Code, typeof(GeneticMultiply));
             api.RegisterEntityBehaviorClass(GeneticGrow.Code, typeof(GeneticGrow));
+            api.RegisterEntityBehaviorClass(BehaviorAnimalInfo.Code, typeof(BehaviorAnimalInfo));
 
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
 
@@ -70,15 +72,24 @@ namespace Genelib
         public override void StartServerSide(ICoreServerAPI api) {
             ServerAPI = api;
             api.Network.RegisterChannel("genelib")
+                .RegisterMessageType<SetNameMessage>().SetMessageHandler<SetNameMessage>(BehaviorAnimalInfo.OnSetNameMessageServer)
+                .RegisterMessageType<SetNoteMessage>().SetMessageHandler<SetNoteMessage>(BehaviorAnimalInfo.OnSetNoteMessageServer)
+                .RegisterMessageType<ToggleBreedingMessage>().SetMessageHandler<ToggleBreedingMessage>(BehaviorAnimalInfo.OnToggleBreedingMessageServer)
                 .RegisterMessageType<GenomeTypesMessage>();
         }
 
         public override void StartClientSide(ICoreClientAPI api) {
             ClientAPI = api;
             api.Network.RegisterChannel("genelib")
+                .RegisterMessageType<SetNameMessage>()
+                .RegisterMessageType<SetNoteMessage>()
+                .RegisterMessageType<ToggleBreedingMessage>()
                 .RegisterMessageType<GenomeTypesMessage>().SetMessageHandler<GenomeTypesMessage>(GenomeType.OnAssetsRecievedClient);
 
             api.Event.LevelFinalize += WaitForGenomeAssets;
+
+            api.Input.RegisterHotKey("genelib.info", Lang.Get("genelib:gui-hotkey-animalinfo"), GlKeys.N, type: HotkeyType.GUIOrOtherControls);
+            api.Input.SetHotKeyHandler("genelib.info", BehaviorAnimalInfo.ToggleAnimalInfoGUI);
         }
 
         public static void SendServerAssets_Postfix(ServerMain __instance, IServerPlayer player) {

@@ -1,4 +1,18 @@
 {
     "block-nestbox": "Ninho",
     "block-nest-ground": "Ninho selvagem",
+    "gui-animalinfo-note": "Nota:",
+    "gui-animalinfo-preventbreeding": "Prevenir acasalamento",
+    "gui-animalinfo-breedingprevented": "Acasalamento prevenido",
+    "gui-animalinfo-inbreedingcoefficient": "CdA: {0}%",
+    "gui-animalinfo-inbreedingcoefficient-desc": "Coeficiente de Acasalamento (probabilidade)",
+    "gui-animalinfo-father": "Pai: {0}",
+    "gui-animalinfo-mother": "Mãe: {0}",
+    "gui-animalinfo-foster": "Mãe adotiva: {0}",
+    "gui-animalinfo-foundation": "Base",
+    "gui-animalinfo-unknownfather": "Desconhecido",
+    "gui-animalinfo-unknownmother": "Desconhecida",
+    "gui-animalinfo-tab-info": "Informações",
+    "gui-animalinfo-tab-status": "Status",
+    "gui-hotkey-animalinfo": "Abrir perfil do animal",
 }

@@ -1,4 +1,18 @@
 {
     "block-nestbox": "Kurze gniazdo",
     "block-nest-ground": "Gniazdo naziemne",
+    "gui-animalinfo-note": "Uwaga:",
+    "gui-animalinfo-preventbreeding": "Zablokuj rozmnażanie",
+    "gui-animalinfo-breedingprevented": "Rozmnażanie zablokowanie",
+    "gui-animalinfo-inbreedingcoefficient": "F: {0}%",
+    "gui-animalinfo-inbreedingcoefficient-desc": "Współczynnik wsobności (probalistyczny)",
+    "gui-animalinfo-father": "Ojciec: {0}",
+    "gui-animalinfo-mother": "Matka: {0}",
+    "gui-animalinfo-foster": "Przybrana matka: {0}",
+    "gui-animalinfo-foundation": "Przodek",
+    "gui-animalinfo-unknownfather": "Nieznany",
+    "gui-animalinfo-unknownmother": "Nieznana",
+    "gui-animalinfo-tab-info": "Informacje",
+    "gui-animalinfo-tab-status": "Status",
+    "gui-hotkey-animalinfo": "Otwórz profil zwierzęcia",
 }
