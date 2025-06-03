@@ -91,6 +91,7 @@ namespace Genelib {
             return false;
         }
 
+        // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         protected override Entity GetRequiredEntityNearby() {
             if (RequiresNearbyEntityCode == null) {
                 return null;
@@ -136,19 +137,24 @@ namespace Genelib {
             return best;
         }
 
-        public void MateWith(Entity sire) {
-            if (spawnEntityCodes == null) PopulateSpawnEntityCodes();
-
-            IsPregnant = true;
-            TotalDaysPregnancyStart = entity.World.Calendar.TotalDays;
-            Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
-            Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
-
+        public virtual int ChooseLitterSize() {
             float q = SpawnQuantityMin + (float)entity.World.Rand.NextDouble() * (SpawnQuantityMax - SpawnQuantityMin);
             int litterSize = (int)Math.Floor(q);
             if (entity.World.Rand.NextSingle() > q - litterSize) {
                 litterSize += 1;
             }
+            return litterSize;
+        }
+
+        public virtual void MateWith(Entity sire) {
+            if (spawnEntityCodes == null) PopulateSpawnEntityCodes();
+
+            IsPregnant = true;
+            TotalDaysPregnancyStart = entity.World.Calendar.TotalDays;
+
+            Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            int litterSize = ChooseLitterSize();
 
             TreeArrayAttribute litterData = new TreeArrayAttribute();
             litterData.value = new TreeAttribute[litterSize];
@@ -238,6 +244,7 @@ namespace Genelib {
             return null;
         }
 
+        // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         protected override void PopulateSpawnEntityCodes()
         {
             base.PopulateSpawnEntityCodes();
@@ -260,6 +267,7 @@ namespace Genelib {
             }
         }
 
+        // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         public override void Initialize(EntityProperties properties, JsonObject attributes)
         {
             base.Initialize(properties, attributes);
