@@ -47,6 +47,8 @@ To get genetics to work right, you will have to add a few specific EntityBehavio
 
 "genelib.multiply" replacing "multiply": Allows the entity to create offspring who inherit genes from both parents. Again the main affects are serverside, that's where the data goes, and clientside you just need it to show the player the info text.
 
+"genelib.info", optional: Allows the player to open an info GUI for the animal by looking at it and pressing 'N'. This allows them to name the animal and view its parentage. Also provides a "Prevent breeding" checkbox which only works if that species's females use the "genelib.multiply" behavior instead of vanilla "multiply". This inherits from the nametag behavior, so you'll probably want to use it as `{ code: "genelib.info", showtagonlywhentargeted: true }`.
+
 This library does not provide support for genetics on egg-laying species. Those features are still provided by [Detailed Animals](https://github.com/sekelsta/detailedanimals) instead.
 
 Aside from EntityBehaviors, if you have any sex-linked genes you should also add male:true/false to the entity's attributes to specify, for example, that roosters are male and hens are female. For convenience, if you leave this out it will take a guess based on the entity code + variant groups - if the whole thing contains the string "-female" it will be treated as female, otherwise as male.
