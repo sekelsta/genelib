@@ -59,7 +59,7 @@ namespace Genelib {
 
             float saturation = tree.GetFloat("saturation", 0);
             
-            if (saturation >= PortionsEatenForMultiply)
+            if (saturation >= PortionsEatenForMultiply && entity.MatingAllowed())
             {
                 Entity maleentity = null;
                 if (RequiresNearbyEntityCode != null && (maleentity = GetRequiredEntityNearby()) == null) return false;
@@ -89,6 +89,51 @@ namespace Genelib {
             }
 
             return false;
+        }
+
+        protected override Entity GetRequiredEntityNearby() {
+            if (RequiresNearbyEntityCode == null) {
+                return null;
+            }
+
+            AssetLocation sire = new AssetLocation(RequiresNearbyEntityCode);
+
+            Entity[] entities = entity.World.GetEntitiesAround(entity.Pos.XYZ, RequiresNearbyEntityRange, RequiresNearbyEntityRange,
+                (e) => {
+                    if (e.WildCardMatch(sire) && e.MatingAllowed()) {
+                        if (!e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            );
+            if (entity.World.Rand.NextSingle() < 0.1f) {
+                return entities[entity.World.Rand.Next(entities.Length)];
+            }
+            return ChooseAvoidingCloseRelatives(entity, entities);
+        }
+
+        public static Entity ChooseAvoidingCloseRelatives(Entity entity, Entity[] entities) {
+            if (entities == null || entities.Length == 0) {
+                return null;
+            }
+            Entity best = entities[0];
+            bool closeRelative = entity.IsCloseRelative(best);
+            float distance = entity.Pos.SquareDistanceTo(best.Pos);
+            for (int i = 1; i < entities.Length; ++i) {
+                if (closeRelative && !entity.IsCloseRelative(entities[i])) {
+                    best = entities[i];
+                    closeRelative = false;
+                    continue;
+                }
+                float currentDistance = entity.Pos.SquareDistanceTo(entities[i].Pos);
+                if (distance > currentDistance) {
+                    best = entities[i];
+                    distance = currentDistance;
+                }
+            }
+            return best;
         }
 
         public void MateWith(Entity sire) {

@@ -94,6 +94,8 @@ namespace Genelib {
                     }
                 }
                 else {
+                    // Note this only works for species using genelib.multiply, but we can't check
+                    // for that because of the males
                     SingleComposer.AddStaticText(Lang.Get("genelib:gui-animalinfo-preventbreeding"), CairoFont.WhiteSmallText(), ElementBounds.Fixed(0, y, Width, 25));
                     SingleComposer.AddSwitch(OnPreventBreedingSet, ElementBounds.Fixed(Width - 25, y - 5, 25, 25), "preventbreeding");
                     SingleComposer.GetSwitch("preventbreeding").SetValue(!Animal.MatingAllowed());
