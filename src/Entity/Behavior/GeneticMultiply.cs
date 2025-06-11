@@ -143,7 +143,7 @@ namespace Genelib {
         public virtual int ChooseLitterSize() {
             float q = SpawnQuantityMin + (float)entity.World.Rand.NextDouble() * (SpawnQuantityMax - SpawnQuantityMin);
             int litterSize = (int)Math.Floor(q);
-            if (entity.World.Rand.NextSingle() > q - litterSize) {
+            if (entity.World.Rand.NextSingle() < q - litterSize) {
                 litterSize += 1;
             }
             return litterSize;
