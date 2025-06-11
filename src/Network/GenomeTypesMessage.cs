@@ -1,9 +1,10 @@
+using Genelib;
 using ProtoBuf;
 using System.Collections.Generic;
 
 using Vintagestory.API.Common;
 
-namespace Genelib {
+namespace Genelib.Network {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class GenomeTypesMessage {
         public string[] AssetLocations;
