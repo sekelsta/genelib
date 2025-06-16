@@ -451,8 +451,8 @@ namespace Genelib {
 
             float[][] tfMatrices = new float[transforms.Length][];
             for (int i = 0; i < transforms.Length; ++i) {
-                Vec3f off = transforms[i].Translation;
-                Vec3f rot = transforms[i].Rotation;
+                FastVec3f off = transforms[i].Translation;
+                FastVec3f rot = transforms[i].Rotation;
                 tfMatrices[i] = new Matrixf()
                     .Translate(off.X, off.Y, off.Z)
                     .Translate(0.5f, 0, 0.5f)
