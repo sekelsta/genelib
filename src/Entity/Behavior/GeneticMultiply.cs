@@ -27,15 +27,37 @@ namespace Genelib {
         protected double PregnancyLengthVariation = 0.04;
         // Fraction of pregnancy length after which the expectant mother has a very large tummy and needs to move carefully
         protected double LatePregnancy = 0.67;
+        // Chance each slowtick that the animal, if all preconditions are met, looks for a mate
+        public double TryGetPregnantChance = 0.06;
+        // Chance that when animals mate, the female actually does get pregnant
+        public double MatingSuccessChance = 0.8;
+        // Saturation consumed on unsuccessful mating (that does not result in the female becoming pregnant)
+        public double MatingFoodCost = 1;
+        // Priority of the AI task that entities use to mate (both male and female)
+        public float MateTaskPriority = 1.5f;
 
         // Duplicate private field from EntityBehaviorMultiply
         protected AssetLocation[] SpawnEntityCodes;
 
+        public bool pregnancyDaysSpecified = false;
         public double PregnancyDays;
         public string RequiresNearbyEntityCode;
         public float RequiresNearbyEntityRange;
 
         protected AssetLocation[] SireCodes;
+
+        // Make litter size a bell curve instead of a uniform
+        protected double litterAddChance = 0.5;
+
+        // Seasonal breeding
+        protected double LactationDays = 0;
+        protected double EstrousCycleDays;
+        protected double DaysInHeat;
+        protected bool InducedOvulation = false;
+        protected bool SeasonalBreeding = false;
+        protected double BreedingSeasonPeak;
+        protected double BreedingSeasonBefore;
+        protected double BreedingSeasonAfter;
 
         protected TreeArrayAttribute Litter {
             get => multiplyTree["litter"] as TreeArrayAttribute;
@@ -123,52 +145,59 @@ namespace Genelib {
             entity.World.FrameProfiler.Mark("multiply");
         }
 
-
-        // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         protected override bool TryGetPregnant() {
-            if (entity.World.Rand.NextDouble() > 0.06) return false;
-            if (TotalDaysCooldownUntil > entity.World.Calendar.TotalDays) return false;
+            if (entity.World.Rand.NextDouble() > TryGetPregnantChance) return false;
 
-            ITreeAttribute tree = entity.WatchedAttributes.GetTreeAttribute("hunger");
-            if (tree == null) return false;
+            if (!EntityCanMate(this.entity)) {
+                return false;
+            }
 
-            float saturation = tree.GetFloat("saturation", 0);
-            
-            if (saturation >= PortionsEatenForMultiply && entity.MatingAllowed())
-            {
-                Entity maleentity = null;
-                bool requiresNearbyEntity = SireCodes.Length > 0;
-                if (requiresNearbyEntity && (maleentity = GetRequiredEntityNearby()) == null) return false;
+            double totalDays = entity.World.Calendar.TotalDays;
 
-                if (entity.World.Rand.NextDouble() < 0.2)
-                {
-                    tree.SetFloat("saturation", saturation - 1);
-                    return false;
-                }
+            if (TotalDaysCooldownUntil + DaysInHeat < totalDays) TotalDaysCooldownUntil += EstrousCycleDays;
 
-                tree.SetFloat("saturation", saturation - PortionsEatenForMultiply);
+            if (TotalDaysCooldownUntil > totalDays) return false;
 
-                if (maleentity != null)
-                {
-                    ITreeAttribute maletree = maleentity.WatchedAttributes.GetTreeAttribute("hunger");
-                    if (maletree != null)
-                    {
-                        saturation = maletree.GetFloat("saturation", 0);
-                        maletree.SetFloat("saturation", Math.Max(0, saturation - 1));
-                    }
-                }
+            if (!IsBreedingSeason()) {
+                TotalDaysCooldownUntil += entity.World.Calendar.DaysPerMonth;
+                return false;
+            }
 
-                // If no required nearby entity code, then self-fertilize
-                MateWith(maleentity ?? entity);
+            Entity sire = GetRequiredEntityNearby();
+            if (sire == null && SireCodes.Length > 0) return false;
+            // If no required nearby entity code, then self-fertilize
+            sire ??= entity;
 
+            EntityBehaviorTaskAI taskAi = entity.GetBehavior<EntityBehaviorTaskAI>();
+            if (taskAi == null) {
+                MateWith(sire);
                 return true;
             }
+            if (taskAi.TaskManager.ActiveTasksBySlot[0] is AiTaskMate) {
+                // Already trying
+                return false;
+            }
+
+            EntityBehaviorTaskAI sireTaskAi = sire.GetBehavior<EntityBehaviorTaskAI>();
+            if (sireTaskAi == null) {
+                MateWith(sire);
+                return true;
+            }
+            if (!(sireTaskAi.TaskManager.ActiveTasksBySlot[0] is AiTaskMate)) {
+                AiTaskMate sireMateTask = new AiTaskMate((EntityAgent)sire, entity);
+                sireMateTask.SetPriority(MateTaskPriority);
+                sireTaskAi.TaskManager.ExecuteTask(sireMateTask, 0);
+            }
+
+            AiTaskMate mateTask = new AiTaskMate((EntityAgent)entity, sire);
+            mateTask.SetPriority(MateTaskPriority);
+            taskAi.TaskManager.ExecuteTask(mateTask, 0);
 
             return false;
         }
 
         public virtual bool EntityHasEatenEnoughToMate(Entity e) {
-            return !e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1;
+            return !e.WatchedAttributes.GetBool("doesEat") || GetSaturation() >= PortionsEatenForMultiply;
         }
 
         public virtual bool EntityCanMate(Entity entity) {
@@ -237,15 +266,49 @@ namespace Genelib {
         }
 
         public virtual int ChooseLitterSize() {
-            float q = SpawnQuantityMin + (float)entity.World.Rand.NextDouble() * (SpawnQuantityMax - SpawnQuantityMin);
-            int litterSize = (int)Math.Floor(q);
-            if (entity.World.Rand.NextSingle() < q - litterSize) {
-                litterSize += 1;
+            int litterSize = (int)SpawnQuantityMin;
+            for (int i = 0; i < (SpawnQuantityMax - SpawnQuantityMin); ++i) {
+                if (entity.World.Rand.NextDouble() < litterAddChance) {
+                    litterSize += 1;
+                }
             }
             return litterSize;
         }
 
+        public bool IsBreedingSeason(double season) {
+            if (!SeasonalBreeding || BreedingSeasonBefore + BreedingSeasonAfter >= 1) {
+                return true;
+            }
+            if (season > BreedingSeasonPeak) {
+                season -= 1;
+            }
+            double timeUntilPeak = BreedingSeasonPeak - season;
+            return timeUntilPeak < BreedingSeasonBefore || 1 - timeUntilPeak < BreedingSeasonAfter;
+        }
+
+        public bool IsBreedingSeason() {
+            return IsBreedingSeason(entity.World.Calendar.GetSeasonRel(entity.Pos.AsBlockPos));
+        }
+
         public virtual void MateWith(Entity sire) {
+            ITreeAttribute tree = entity.WatchedAttributes.GetTreeAttribute("hunger");
+            float saturation = tree?.GetFloat("saturation", 0) ?? 0;
+            if (entity.World.Rand.NextDouble() > MatingSuccessChance) {
+                tree?.SetFloat("saturation", saturation - (float)MatingFoodCost);
+                return;
+            }
+            tree?.SetFloat("saturation", saturation - PortionsEatenForMultiply);
+
+            if (sire != null)
+            {
+                ITreeAttribute maletree = sire.WatchedAttributes.GetTreeAttribute("hunger");
+                if (maletree != null)
+                {
+                    saturation = maletree.GetFloat("saturation", 0);
+                    maletree.SetFloat("saturation", Math.Max(0, saturation - (float)MatingFoodCost));
+                }
+            }
+
             Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             int litterSize = ChooseLitterSize();
@@ -288,7 +351,6 @@ namespace Genelib {
                 litter.Add(offspring);
             }
             string offspringGenes = genesDebug.Count == 0 ? "" : "\n    pgenes=" + String.Join("\n    pgenes=", genesDebug);
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " became pregnant with " + litter.Count + " offpsring (" + litterSize + " attempted), mother ID=" + entity.UniqueID() + ", father ID=" + sire.UniqueID() + offspringGenes);
 
             if (litter.Count == 0) {
                 if (litterSize > 0 && MiscarriageCooldown > 0) {
@@ -314,13 +376,9 @@ namespace Genelib {
         protected override void GiveBirth(float q) {
             int nextGeneration = entity.WatchedAttributes.GetInt("generation", 0) + 1;
             TreeAttribute[] litterData = Litter?.value;
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " id=" + entity.EntityId + " UID=" + entity.UniqueID() + " now giving birth to " + litterData.Length + " offpsring");
             foreach (TreeAttribute childData in litterData) {
-                entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " giving birth to child, mother ID=" + childData.GetLong("motherId") + ", father ID=" + childData.GetLong("fatherId"));
                 Entity spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
-                entity.Api.Logger.Notification("[genelib] Newborn " + spawn.Code + " pgenes=" + spawn.GetBehavior<EntityBehaviorGenetics>()?.Genome?.anonymous.ArrayToString());
             }
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " id=" + entity.EntityId + " birth complete.");
             SetNotPregnant();
             TotalDaysLastBirth = entity.World.Calendar.TotalDays;
             TotalDaysCooldownUntil = entity.World.Calendar.TotalDays + MultiplyCooldownDaysMin + entity.World.Rand.NextDouble() * (MultiplyCooldownDaysMax - MultiplyCooldownDaysMin);
@@ -358,7 +416,6 @@ namespace Genelib {
         }
 
         public virtual bool CanLayEgg() {
-            // Not implemented
             return false;
         }
 
@@ -376,6 +433,10 @@ namespace Genelib {
             multiplyTree = entity.WatchedAttributes.GetTreeAttribute("multiply");
 
             if (IsPregnant) {
+                if (!pregnancyDaysSpecified) {
+                    infotext.AppendLine(Lang.Get("Is pregnant"));
+                    return;
+                }
                 int passed = (int)Math.Round(entity.World.Calendar.TotalDays - TotalDaysPregnancyStart);
                 int expected = (int)Math.Round(PregnancyDays);
                 infotext.AppendLine(Lang.Get("genelib:infotext-multiply-pregnancy", passed, expected));
@@ -396,14 +457,32 @@ namespace Genelib {
         }
 
         protected virtual void GetReadinessInfoText(StringBuilder infotext, double animalWeight) {
+            if (!entity.MatingAllowed()) {
+                return;
+            }
+
             ITreeAttribute tree = entity.WatchedAttributes.GetTreeAttribute("hunger");
-            if (tree != null)
+            if (tree != null && PortionsEatenForMultiply > 0)
             {
                 float saturation = tree.GetFloat("saturation", 0);
-                infotext.AppendLine(Lang.Get("Portions eaten: {0}", saturation));
+                infotext.AppendLine(Lang.Get("Portions eaten: {0}", (int)saturation));
             }
 
             double daysLeft = TotalDaysCooldownUntil - entity.World.Calendar.TotalDays;
+            IGameCalendar calendar = entity.World.Calendar;
+            double season = (calendar.GetSeasonRel(entity.Pos.AsBlockPos) + daysLeft / calendar.DaysPerMonth / 12) % 1;
+            if (!IsBreedingSeason(season)) {
+                // TODO: Remove this and put the info in the handbook instead
+                double breedingStart = (BreedingSeasonPeak - BreedingSeasonBefore + 1) % 1;
+                if (breedingStart < 0.5) {
+                    infotext.AppendLine(Lang.Get("detailedanimals:infotext-reproduce-longday"));
+                }
+                else {
+                    infotext.AppendLine(Lang.Get("detailedanimals:infotext-reproduce-shortday"));
+                }
+                return;
+            }
+
             if (daysLeft <= 0) {
                 infotext.AppendLine(Lang.Get("game:Ready to mate"));
             }
@@ -421,9 +500,11 @@ namespace Genelib {
 
             if (attributes.KeyExists("pregnancyMonths")) {
                 PregnancyDays = attributes["pregnancyMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                pregnancyDaysSpecified = true;
             }
             else {
                 PregnancyDays = attributes["pregnancyDays"].AsDouble(3f);
+                pregnancyDaysSpecified = attributes.KeyExists("pregnancyDays");
             }
 
             RequiresNearbyEntityRange = attributes["requiresNearbyEntityRange"].AsFloat(16);
@@ -457,11 +538,57 @@ namespace Genelib {
                 SpawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
             }
 
+            if (attributes.KeyExists("litterAddChance")) {
+                litterAddChance = attributes["litterAddChance"].AsDouble();
+            }
+            if (attributes.KeyExists("mateTaskPriority")) {
+                MateTaskPriority = attributes["mateTaskPriority"].AsFloat();
+            }
+
             if (attributes.KeyExists("multiplyCooldownMonthsMin")) {
                 MultiplyCooldownDaysMin = attributes["multiplyCooldownMonthsMin"].AsDouble() * entity.World.Calendar.DaysPerMonth;
             }
             if (attributes.KeyExists("multiplyCooldownMonthsMax")) {
                 MultiplyCooldownDaysMax = attributes["multiplyCooldownMonthsMax"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+            }
+
+            // Seasonal breeding
+            InducedOvulation = attributes["inducedOvulation"].AsBool(false);
+            if (InducedOvulation) {
+                EstrousCycleDays = MultiplyCooldownDaysMax;
+                DaysInHeat = EstrousCycleDays;
+            }
+            else {
+                if (attributes.KeyExists("estrousCycleMonths")) {
+                    EstrousCycleDays = attributes["estrousCycleMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                }
+                else if (attributes.KeyExists("estrousCycleDays")) {
+                    EstrousCycleDays = attributes["estrousCycleDays"].AsDouble();
+                }
+                else {
+                    EstrousCycleDays = entity.World.Calendar.DaysPerMonth;
+                }
+
+                if (attributes.KeyExists("daysInHeat")) {
+                    DaysInHeat = attributes["daysInHeat"].AsDouble();
+                    DaysInHeat *= Math.Clamp(entity.World.Calendar.DaysPerMonth, 3, 9) / 9;
+                }
+                else {
+                    DaysInHeat = 2;
+                }
+            }
+            if (attributes.KeyExists("breedingPeakMonth")) {
+                SeasonalBreeding = true;
+                BreedingSeasonPeak = attributes["breedingPeakMonth"].AsDouble() / 12;
+                BreedingSeasonBefore = attributes["breedingMonthsBefore"].AsDouble() / 12;
+                BreedingSeasonAfter = attributes["breedingMonthsAfter"].AsDouble() / 12;
+            }
+
+            if (attributes.KeyExists("lactationMonths")) {
+                LactationDays = attributes["lactationMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+            }
+            else if (attributes.KeyExists("lactationDays")) {
+                LactationDays = attributes["lactationDays"].AsDouble();
             }
 
             if (IsPregnant) {

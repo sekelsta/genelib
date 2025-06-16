@@ -1,5 +1,7 @@
+using Genelib.Extensions;
 using Genelib.Network;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -18,6 +20,8 @@ namespace Genelib
 {
     public class GenelibSystem : ModSystem
     {
+        public static bool AutoadjustAnimalBehaviors = false;
+
         public static readonly string modid = "genelib";
         public static AssetCategory genetics = null;
 
@@ -38,13 +42,26 @@ namespace Genelib
                 typeof(ServerMain).GetMethod("SendServerAssets", BindingFlags.Instance | BindingFlags.Public),
                 postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("SendServerAssets_Postfix", BindingFlags.Static | BindingFlags.Public)) 
             );
+            harmony.Patch(
+                typeof(EntityBehaviorGrow).GetMethod("BecomeAdult", BindingFlags.Instance | BindingFlags.NonPublic),
+                prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("BecomeAdult_Prefix", BindingFlags.Static | BindingFlags.Public)) 
+            );
+            harmony.Patch(
+                typeof(EntityBehaviorGrow).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.Public),
+                postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("Grow_Initialize_Postfix", BindingFlags.Static | BindingFlags.Public)) 
+            );
+            harmony.Patch(
+                typeof(EntitySidedProperties).GetConstructor(BindingFlags.Instance | BindingFlags.Public, new[] { typeof(JsonObject[]), typeof(Dictionary<string, JsonObject>)}),
+                prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("EntitySidedProperties_Ctor_Prefix", BindingFlags.Static | BindingFlags.Public)) 
+            );
 
             api.RegisterBlockClass("Genelib.BlockNest", typeof(BlockGeneticNest));
             api.RegisterBlockEntityClass("Genelib.Nest", typeof(GeneticNest));
 
+            AiTaskRegistry.Register<AiTaskMate>("genelib.mate");
+
             api.RegisterEntityBehaviorClass(EntityBehaviorGenetics.Code, typeof(EntityBehaviorGenetics));
             api.RegisterEntityBehaviorClass(GeneticMultiply.Code, typeof(GeneticMultiply));
-            api.RegisterEntityBehaviorClass(GeneticGrow.Code, typeof(GeneticGrow));
             api.RegisterEntityBehaviorClass(BehaviorAnimalInfo.Code, typeof(BehaviorAnimalInfo));
 
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
@@ -92,6 +109,43 @@ namespace Genelib
             api.Input.SetHotKeyHandler("genelib.info", BehaviorAnimalInfo.ToggleAnimalInfoGUI);
         }
 
+        public static bool BecomeAdult_Prefix(EntityBehaviorGrow __instance, Entity adult, bool keepTextureIndex) {
+            Entity entity = __instance.entity;
+            // Detailed Animals compat
+            adult.WatchedAttributes.CopyIfPresent("hunger", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fedByPlayer", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("bodyCondition", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("ownedby", entity.WatchedAttributes);
+
+            adult.WatchedAttributes.CopyIfPresent("nametag", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("genetics", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("preventBreeding", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("neutered", entity.WatchedAttributes);
+
+            adult.WatchedAttributes.SetLong("UID", entity.UniqueID());
+
+            // PetAI compat
+            adult.WatchedAttributes.CopyIfPresent("domesticationstatus", entity.WatchedAttributes);
+
+            return true;
+        }
+
+        public static void Grow_Initialize_Postfix(EntityBehaviorGrow __instance, EntityProperties properties, JsonObject typeAttributes) {
+            IGameCalendar calendar = __instance.entity.World.Calendar;
+            if (typeAttributes.KeyExists("monthsToGrow")) {
+                __instance.HoursToGrow = typeAttributes["monthsToGrow"].AsFloat() * calendar.DaysPerMonth * calendar.HoursPerDay;
+            }
+        }
+
         public static void SendServerAssets_Postfix(ServerMain __instance, IServerPlayer player) {
             if (player?.ConnectionState == null) {
                 return;
@@ -123,6 +177,35 @@ namespace Genelib
             if (!GenomeType.assetsReceived) {
                 throw new Exception("Connection failed: Genome type assets arrival timed out");
             }
+        }
+
+        public static bool EntitySidedProperties_Ctor_Prefix(EntitySidedProperties __instance, ref JsonObject[] behaviors, ref Dictionary<string, JsonObject> commonConfigs) {
+            if (!AutoadjustAnimalBehaviors && (commonConfigs == null || !commonConfigs.ContainsKey(GeneticMultiply.Code))) {
+                return true;
+            }
+            int multiplyIndex = -1;
+            for (int i = 0; i < behaviors.Length; ++i) {
+                string code = behaviors[i]["code"].AsString();
+                if (code == "multiply") {
+                    multiplyIndex = i;
+                }
+            }
+
+            if (multiplyIndex != -1) {
+                JObject multiplyJson = (JObject)(behaviors[multiplyIndex].Token);
+                multiplyJson.Property("code").Value = new JValue(GeneticMultiply.Code);
+            }
+
+            // Might have to also merge multiply commonconfig with genelib.multiply's for future mod compat
+
+            if (commonConfigs != null) {
+                commonConfigs.Remove("multiply", out JsonObject multiplyConfig);
+                if (multiplyConfig != null) {
+                    commonConfigs.Add(GeneticMultiply.Code, multiplyConfig);
+                }
+            }
+
+            return true;
         }
     }
 }
