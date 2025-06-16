@@ -144,6 +144,9 @@ namespace Genelib {
         }
 
         internal static void OnAssetsRecievedClient(GenomeTypesMessage message) {
+            if (message == null) throw new Exception("Null GenomeTypesMessage received, this could mean an error on the server");
+            if (message.AssetLocations == null || message.GenomeTypes == null) throw new Exception("Invalid GenomeTypesMessage received, this could mean an error on the server");
+
             for (int i = 0; i < message.AssetLocations.Length; ++i) {
                 loaded[message.AssetLocations[i]] = message.GenomeTypes[i];
             }
