@@ -1,3 +1,4 @@
+using Genelib.Extensions;
 using Genelib.Network;
 using HarmonyLib;
 using System;
@@ -38,13 +39,16 @@ namespace Genelib
                 typeof(ServerMain).GetMethod("SendServerAssets", BindingFlags.Instance | BindingFlags.Public),
                 postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("SendServerAssets_Postfix", BindingFlags.Static | BindingFlags.Public)) 
             );
+            harmony.Patch(
+                typeof(EntityBehaviorGrow).GetMethod("BecomeAdult", BindingFlags.Instance | BindingFlags.NonPublic),
+                prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("BecomeAdult_Prefix", BindingFlags.Static | BindingFlags.Public)) 
+            );
 
             api.RegisterBlockClass("Genelib.BlockNest", typeof(BlockGeneticNest));
             api.RegisterBlockEntityClass("Genelib.Nest", typeof(GeneticNest));
 
             api.RegisterEntityBehaviorClass(EntityBehaviorGenetics.Code, typeof(EntityBehaviorGenetics));
             api.RegisterEntityBehaviorClass(GeneticMultiply.Code, typeof(GeneticMultiply));
-            api.RegisterEntityBehaviorClass(GeneticGrow.Code, typeof(GeneticGrow));
             api.RegisterEntityBehaviorClass(BehaviorAnimalInfo.Code, typeof(BehaviorAnimalInfo));
 
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
@@ -90,6 +94,36 @@ namespace Genelib
 
             api.Input.RegisterHotKey("genelib.info", Lang.Get("genelib:gui-hotkey-animalinfo"), GlKeys.N, type: HotkeyType.GUIOrOtherControls);
             api.Input.SetHotKeyHandler("genelib.info", BehaviorAnimalInfo.ToggleAnimalInfoGUI);
+        }
+
+        public static bool BecomeAdult_Prefix(EntityBehaviorGrow __instance, Entity adult, bool keepTextureIndex) {
+            Entity entity = __instance.entity;
+            // Detailed Animals compat
+            adult.WatchedAttributes.CopyIfPresent("hunger", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fedByPlayer", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("bodyCondition", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("ownedby", entity.WatchedAttributes);
+
+            adult.WatchedAttributes.CopyIfPresent("nametag", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("genetics", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("motherKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fatherKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterId", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterName", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("fosterKey", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("preventBreeding", entity.WatchedAttributes);
+            adult.WatchedAttributes.CopyIfPresent("neutered", entity.WatchedAttributes);
+
+            adult.WatchedAttributes.SetLong("UID", entity.UniqueID());
+
+            // PetAI compat
+            adult.WatchedAttributes.CopyIfPresent("domesticationstatus", entity.WatchedAttributes);
+
+            return true;
         }
 
         public static void SendServerAssets_Postfix(ServerMain __instance, IServerPlayer player) {
