@@ -143,7 +143,8 @@ namespace Genelib {
         public virtual int ChooseLitterSize() {
             float q = SpawnQuantityMin + (float)entity.World.Rand.NextDouble() * (SpawnQuantityMax - SpawnQuantityMin);
             int litterSize = (int)Math.Floor(q);
-            if (entity.World.Rand.NextSingle() < q - litterSize) {
+            // Going to keep this bug until the switch to 1.21, due to the effect on the API
+            if (entity.World.Rand.NextSingle() > q - litterSize) {
                 litterSize += 1;
             }
             return litterSize;
