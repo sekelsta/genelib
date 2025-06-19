@@ -1,0 +1,18 @@
+{
+    "block-nestbox": "Сідало",
+    "block-nest-ground": "Гніздо",
+    "gui-animalinfo-note": "Примітка:",
+    "gui-animalinfo-preventbreeding": "Запобігання розмноженню",
+    "gui-animalinfo-breedingprevented": "Розведення заборонено",
+    "gui-animalinfo-inbreedingcoefficient": "COI: {0}%",
+    "gui-animalinfo-inbreedingcoefficient-desc": "Коефіцієнт інбридингу (ймовірнісний)",
+    "gui-animalinfo-father": "Батько: {0}",
+    "gui-animalinfo-mother": "Мати: {0}",
+    "gui-animalinfo-foster": "Прийомна мати: {0}",
+    "gui-animalinfo-foundation": "Основа",
+    "gui-animalinfo-unknownfather": "Невідомо",
+    "gui-animalinfo-unknownmother": "Невідомо",
+    "gui-animalinfo-tab-info": "Інформація",
+    "gui-animalinfo-tab-status": "Статус",
+    "gui-hotkey-animalinfo": "Відкрити профіль тварини",
+}
