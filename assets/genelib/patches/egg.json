@@ -1,0 +1,11 @@
+[
+    {
+        file: "game:itemtypes/food/egg.json",
+        op: "addmerge",
+        path: "/attributes/nestitemByType",
+        value: {
+            "*-raw": true,
+        },
+        side: "server",
+    },
+]
