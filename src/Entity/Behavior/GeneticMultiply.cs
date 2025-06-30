@@ -276,16 +276,6 @@ namespace Genelib {
             base.Initialize(properties, attributes);
 
             this.typeAttributes = attributes;
-
-            if (entity.World.Side == EnumAppSide.Server)
-            {
-                if (!multiplyTree.HasAttribute("totalDaysLastBirth"))
-                {
-                    TotalDaysLastBirth = -9999;
-                }
-
-                callbackId = entity.World.RegisterCallback(CheckMultiply, 3000);
-            }
         }
     }
 }
