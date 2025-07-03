@@ -14,7 +14,6 @@ namespace Genelib {
 
         // Duplicate private parts from EntityBehaviorMultiply
         protected JsonObject typeAttributes;
-        protected long callbackId = 0;
         protected AssetLocation[] spawnEntityCodes;
 
         public float PregnancyDays
