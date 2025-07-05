@@ -378,18 +378,11 @@ namespace Genelib {
 
         public override string ToString() {
             return "Genome << type:" + Type.Name 
-                + ",\n    autosomal=" + ArrayToString(autosomal) 
-                + ",\n    primary_xz=" + ArrayToString(primary_xz) 
-                + ",\n    secondary_xz=" + ArrayToString(secondary_xz) 
-                + ",\n    yw=" + ArrayToString(yw) 
-                + ",\n    anonymous=" + ArrayToString(anonymous) + " >>";
-        }
-
-        private string ArrayToString<T>(T[] array) {
-            if (array == null) {
-                return "null";
-            }
-            return "[" + string.Join(",", array) + "]";
+                + ",\n    autosomal=" + autosomal.ArrayToString() 
+                + ",\n    primary_xz=" + primary_xz.ArrayToString() 
+                + ",\n    secondary_xz=" + secondary_xz.ArrayToString() 
+                + ",\n    yw=" + yw.ArrayToString() 
+                + ",\n    anonymous=" + anonymous.ArrayToString() + " >>";
         }
     }
 }

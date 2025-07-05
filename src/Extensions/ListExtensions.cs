@@ -15,5 +15,12 @@ namespace Genelib.Extensions {
         public static void EnsureSize<T>(this List<T> list, int size) where T : new() {
             EnsureSize(list, size, new T());
         }
+
+        public static string ArrayToString<T>(this T[] array) {
+            if (array == null) {
+                return "null";
+            }
+            return "[" + string.Join(",", array) + "]";
+        }
     }
 }

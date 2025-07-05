@@ -15,4 +15,12 @@
     "gui-animalinfo-tab-info": "Info",
     "gui-animalinfo-tab-status": "Status",
     "gui-hotkey-animalinfo": "Tierprofil aufrufen",
+
+    "infotext-multiply-pregnancy": "{0} Tage schwanger, von durchschnittlich {1}.",
+    "infotext-multiply-earlypregnancy": "Befindet sich in einer frühen Schwangerschaftsphase. Eine Fehlgeburt ist möglich.",
+    "infotext-multiply-latepregnancy": "Ist sehr schwanger.",
+    "infotext-multiply-waitdays1": "Weniger als ein Tag bis zur Paarungsfähigkeit.",
+    "infotext-multiply-waitdays2": "Zwei Tage bis zur Paarungsfähigkeit.",
+    "infotext-multiply-waitdays3": "Drei Tage bis zur Paarungsfähigkeit.",
+    "infotext-multiply-waitdays4": "Vier Tage bis zur Paarungsfähigkeit.",
 }
