@@ -11,6 +11,8 @@ using Genelib.Extensions;
 namespace Genelib {
     public class GeneticMultiply : EntityBehaviorMultiply {
         public const string Code = "genelib.multiply";
+        protected double viabilityCheckDelay = 0;
+        protected double miscarriageChance = 0;
 
         // Duplicate private parts from EntityBehaviorMultiply
         protected JsonObject typeAttributes;
@@ -35,6 +37,14 @@ namespace Genelib {
             get => multiplyTree["litter"] as TreeArrayAttribute;
             set { 
                 multiplyTree["litter"] = value;
+                entity.WatchedAttributes.MarkPathDirty("multiply");
+            }
+        }
+
+        public bool InEarlyPregnancy {
+            get => multiplyTree.GetBool("earlyPregnancy", true);
+            set {
+                multiplyTree.SetBool("earlyPregnancy", value);
                 entity.WatchedAttributes.MarkPathDirty("multiply");
             }
         }
@@ -148,52 +158,55 @@ namespace Genelib {
             return litterSize;
         }
 
-        public virtual void MateWith(Entity sire) {
+        public virtual bool MateWith(Entity sire) {
             if (spawnEntityCodes == null) PopulateSpawnEntityCodes();
-
-            IsPregnant = true;
-            TotalDaysPregnancyStart = entity.World.Calendar.TotalDays;
 
             Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             int litterSize = ChooseLitterSize();
 
-            TreeArrayAttribute litterData = new TreeArrayAttribute();
-            litterData.value = new TreeAttribute[litterSize];
+            List<TreeAttribute> litter = new List<TreeAttribute>();
             for (int i = 0; i < litterSize; ++i) {
+                if (viabilityCheckDelay == 0 && entity.World.Rand.NextSingle() < miscarriageChance) {
+                    continue;
+                }
                 AssetLocation offspringCode = spawnEntityCodes[entity.World.Rand.Next(spawnEntityCodes.Length)];
-                litterData.value[i] = new TreeAttribute();
+                TreeAttribute offspring = new TreeAttribute();
                 if (ourGenome != null && sireGenome != null) {
                     bool heterogametic = ourGenome.Type.SexDetermination.Heterogametic(entity.IsMale());
                     Genome child = new Genome(ourGenome, sireGenome, heterogametic, entity.World.Rand);
                     child.Mutate(GenelibConfig.MutationRate, entity.World.Rand);
-                    TreeAttribute childGeneticsTree = (TreeAttribute) litterData.value[i].GetOrAddTreeAttribute("genetics");
-                    if (!child.EmbryonicLethal()) {
-                        child.AddToTree(childGeneticsTree);
+                    TreeAttribute childGeneticsTree = offspring.GetOrAddTreeAttribute("genetics");
+                    if (viabilityCheckDelay == 0 && child.EmbryonicLethal()) {
+                        continue;
                     }
+                    child.AddToTree(childGeneticsTree);
                 }
-                litterData.value[i].SetString("code", offspringCode.ToString());
+                offspring.SetString("code", offspringCode.ToString());
 
-                litterData.value[i].SetLong("motherId", entity.UniqueID());
+                offspring.SetLong("motherId", entity.UniqueID());
                 string motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
                 if (motherName != null && motherName != "") {
-                    litterData.value[i].SetString("motherName", motherName);
+                    offspring.SetString("motherName", motherName);
                 }
-                litterData.value[i].SetString("motherKey", entity.Code.Domain + ":item-creature-" + entity.Code.Path);
+                offspring.SetString("motherKey", entity.Code.Domain + ":item-creature-" + entity.Code.Path);
 
-                litterData.value[i].SetLong("fatherId", sire.UniqueID());
+                offspring.SetLong("fatherId", sire.UniqueID());
                 string fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
                 if (fatherName != null && fatherName != "") {
-                    litterData.value[i].SetString("fatherName", fatherName);
+                    offspring.SetString("fatherName", fatherName);
                 }
-                litterData.value[i].SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
-            }
-            Litter = litterData;
-            if (litterData.value.Length == 0) {
-                SetNotPregnant();
+                offspring.SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
+                litter.Add(offspring);
             }
 
-            entity.WatchedAttributes.MarkPathDirty("multiply");
+            if (litter.Count == 0) {
+                return false;
+            }
+
+            TreeArrayAttribute litterData = new TreeArrayAttribute();
+            litterData.value = litter.ToArray();
+            Litter = litterData;
         }
 
         protected override void GiveBirth(float q) {
