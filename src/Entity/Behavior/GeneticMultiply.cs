@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -27,24 +28,14 @@ namespace Genelib {
         // Fraction of pregnancy length after which the expectant mother has a very large tummy and needs to move carefully
         protected double LatePregnancy = 0.67;
 
-        // Duplicate private parts from EntityBehaviorMultiply
-        protected JsonObject typeAttributes;
-        protected AssetLocation[] spawnEntityCodes;
+        // Duplicate private field from EntityBehaviorMultiply
+        protected AssetLocation[] SpawnEntityCodes;
 
-        public float PregnancyDays
-        {
-            get { return typeAttributes["pregnancyDays"].AsFloat(3f); }
-        }
+        public double PregnancyDays;
+        public string RequiresNearbyEntityCode;
+        public float RequiresNearbyEntityRange;
 
-        public string RequiresNearbyEntityCode
-        {
-            get { return typeAttributes["requiresNearbyEntityCode"].AsString(""); }
-        }
-
-        public float RequiresNearbyEntityRange
-        {
-            get { return typeAttributes["requiresNearbyEntityRange"].AsFloat(5); }
-        }
+        protected AssetLocation[] SireCodes;
 
         protected TreeArrayAttribute Litter {
             get => multiplyTree["litter"] as TreeArrayAttribute;
@@ -146,7 +137,8 @@ namespace Genelib {
             if (saturation >= PortionsEatenForMultiply && entity.MatingAllowed())
             {
                 Entity maleentity = null;
-                if (RequiresNearbyEntityCode != null && (maleentity = GetRequiredEntityNearby()) == null) return false;
+                bool requiresNearbyEntity = SireCodes.Length > 0;
+                if (requiresNearbyEntity && (maleentity = GetRequiredEntityNearby()) == null) return false;
 
                 if (entity.World.Rand.NextDouble() < 0.2)
                 {
@@ -175,22 +167,42 @@ namespace Genelib {
             return false;
         }
 
+        public virtual bool EntityHasEatenEnoughToMate(Entity e) {
+            return !e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1;
+        }
+
+        public virtual bool EntityCanMate(Entity entity) {
+            if (!entity.Alive) {
+                return false;
+            }
+            if (entity.WatchedAttributes.GetBool("neutered", false)) {
+                return false;
+            }
+            if (!entity.MatingAllowed()) {
+                return false;
+            }
+            return EntityHasEatenEnoughToMate(entity);
+        }
+
         // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         protected override Entity GetRequiredEntityNearby() {
-            if (RequiresNearbyEntityCode == null) {
+            if (SireCodes.Length == 0) {
                 return null;
             }
 
-            AssetLocation sire = new AssetLocation(RequiresNearbyEntityCode);
-
             Entity[] entities = entity.World.GetEntitiesAround(entity.Pos.XYZ, RequiresNearbyEntityRange, RequiresNearbyEntityRange,
                 (e) => {
-                    if (e.WildCardMatch(sire) && e.MatingAllowed()) {
-                        if (!e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1) {
-                            return true;
+                    bool matches = false;
+                    foreach (AssetLocation sire in SireCodes) {
+                        if (e.WildCardMatch(sire)) {
+                            matches = true;
+                            break;
                         }
                     }
-                    return false;
+                    if (!matches || !EntityCanMate(e)) {
+                        return false;
+                    }
+                    return true;
                 }
             );
             if (entities == null || entities.Length == 0) {
@@ -234,8 +246,6 @@ namespace Genelib {
         }
 
         public virtual void MateWith(Entity sire) {
-            if (spawnEntityCodes == null) PopulateSpawnEntityCodes();
-
             Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             int litterSize = ChooseLitterSize();
@@ -248,7 +258,7 @@ namespace Genelib {
                     if (ViabilityCheckDelay == 0) continue;
                     offspring.SetBool("viable", false); // Predetermined, to avoid save-scumming
                 }
-                AssetLocation offspringCode = spawnEntityCodes[entity.World.Rand.Next(spawnEntityCodes.Length)];
+                AssetLocation offspringCode = SpawnEntityCodes[entity.World.Rand.Next(SpawnEntityCodes.Length)];
                 if (ourGenome != null && sireGenome != null) {
                     bool heterogametic = ourGenome.Type.SexDetermination.Heterogametic(entity.IsMale());
                     Genome child = new Genome(ourGenome, sireGenome, heterogametic, entity.World.Rand);
@@ -358,29 +368,6 @@ namespace Genelib {
         }
 
         // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
-        protected override void PopulateSpawnEntityCodes()
-        {
-            base.PopulateSpawnEntityCodes();
-            JsonObject sec = typeAttributes["spawnEntityCodes"];   // Optional fancier syntax in version 1.19+
-            if (!sec.Exists)
-            {
-                sec = typeAttributes["spawnEntityCode"];    // The simple property as it was pre-1.19 - can still be used, suitable for the majority of cases
-                if (sec.Exists) spawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
-                return;
-            }
-            if (sec.IsArray())
-            {
-                SpawnEntityProperties[] codes = sec.AsArray<SpawnEntityProperties>();
-                spawnEntityCodes = new AssetLocation[codes.Length];
-                for (int i = 0; i < codes.Length; i++) spawnEntityCodes[i] = new AssetLocation(codes[i].Code ?? "");
-            }
-            else
-            {
-                spawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
-            }
-        }
-
-        // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
         public override void GetInfoText(StringBuilder infotext) {
             if (!entity.Alive) {
                 return;
@@ -432,7 +419,50 @@ namespace Genelib {
         {
             base.Initialize(properties, attributes);
 
-            this.typeAttributes = attributes;
+            if (attributes.KeyExists("pregnancyMonths")) {
+                PregnancyDays = attributes["pregnancyMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+            }
+            else {
+                PregnancyDays = attributes["pregnancyDays"].AsDouble(3f);
+            }
+
+            RequiresNearbyEntityRange = attributes["requiresNearbyEntityRange"].AsFloat(16);
+
+            RequiresNearbyEntityCode = null;
+            string[] sireStrings;
+            if (attributes.KeyExists("sireCodes")) {
+                sireStrings = attributes["sireCodes"].AsArray<string>();
+            }
+            else {
+                sireStrings = new string[] { attributes["requiresNearbyEntityCode"].AsString("") };
+            }
+            SireCodes = sireStrings.Select(x => AssetLocation.Create(x, entity.Code.Domain)).ToArray();
+
+            // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
+            JsonObject sec = attributes["spawnEntityCodes"];   // Optional fancier syntax in version 1.19+
+            if (!sec.Exists)
+            {
+                sec = attributes["spawnEntityCode"];    // The simple property as it was pre-1.19 - can still be used, suitable for the majority of cases
+                if (sec.Exists) SpawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
+                return;
+            }
+            if (sec.IsArray())
+            {
+                SpawnEntityProperties[] codes = sec.AsArray<SpawnEntityProperties>();
+                SpawnEntityCodes = new AssetLocation[codes.Length];
+                for (int i = 0; i < codes.Length; i++) SpawnEntityCodes[i] = new AssetLocation(codes[i].Code ?? "");
+            }
+            else
+            {
+                SpawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
+            }
+
+            if (attributes.KeyExists("multiplyCooldownMonthsMin")) {
+                MultiplyCooldownDaysMin = attributes["multiplyCooldownMonthsMin"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+            }
+            if (attributes.KeyExists("multiplyCooldownMonthsMax")) {
+                MultiplyCooldownDaysMax = attributes["multiplyCooldownMonthsMax"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+            }
 
             if (IsPregnant) {
                 if (Litter == null) {
