@@ -246,15 +246,13 @@ namespace Genelib {
             XZ = null!;
         }
 
-        public Genome(GeneInitializer? initializer, bool heterogametic, Random random) : this(initializer.ForType, 2) {
+        public Genome(GeneInitializer initializer, bool heterogametic, Random random) : this(initializer.ForType, 2) {
             if (heterogametic) {
                 XZ = new byte[Type.XZ.GeneCount, Ploidy/2];
             }
             else {
                 XZ = new byte[Type.XZ.GeneCount, Ploidy];
             }
-
-            if (initializer == null) return;
 
             for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
                 for (int n = 0; n < Ploidy; ++n) {
@@ -478,7 +476,7 @@ namespace Genelib {
             XZ ??= new byte[0, heterogametic ? Ploidy/2 : Ploidy]; // Need to set correct ploidy for it here, then length gets handled later
 
 
-            bool moveCoiGenes = Autosomal.Length == 2 * 48 && Bitwise == null && Ploidy == 2; // TODO: Remove this after people have had a chance to update, but before it starts causing problems
+            bool moveCoiGenes = Autosomal?.Length == 2 * 48 && Bitwise == null && Ploidy == 2; // TODO: Remove this after people have had a chance to update, but before it starts causing problems
 
             this.Autosomal = atLeastSize(Autosomal, Type.Autosomal.GeneCount);
             this.Anonymous = atLeastSize(Anonymous, Type.Anonymous.GeneCount);
