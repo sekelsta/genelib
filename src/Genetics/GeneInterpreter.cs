@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -30,6 +31,10 @@ namespace Genelib {
 
         // Called on first spawn or when an entity is born, after genome is finalized
         void Interpret(EntityBehaviorGenetics genetics);
+
+        void PrepareShape(EntityBehaviorGenetics genetics, ref List<(AssetLocation, Shape)> overlays, string shapePathForLogging, ref string[] willDeleteElements) {
+            // Do nothing
+        }
 
         ITexPositionSource GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
             return null;

@@ -93,6 +93,48 @@ namespace Genelib {
             entity.WatchedAttributes.MarkPathDirty("genetics");
         }
 
+        public override void OnTesselation(ref Shape entityShape, string shapePathForLogging, ref bool shapeIsCloned, ref string[] willDeleteElements) {
+            ICoreClientAPI clientAPI = entity.Api as ICoreClientAPI;
+
+            if (clientAPI == null) return;
+
+            List<(AssetLocation, Shape)> overlays = null;
+            foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+                interpreter.PrepareShape(this, ref overlays, shapePathForLogging, ref willDeleteElements);
+            }
+
+            if (overlays == null || overlays.Count == 0) return;
+
+            if (!shapeIsCloned) {
+                entityShape = entityShape.Clone();
+                shapeIsCloned = true;
+            }
+
+            string prefix = null;
+            foreach ((AssetLocation, Shape) overlay in overlays) {
+                AssetLocation shapePath = overlay.Item1;
+                Shape partShape = overlay.Item2 ?? Shape.TryGet(entity.Api, shapePath);
+
+                if (partShape == null) {
+                    entity.Api.Logger.Warning("Entity shape part {0} defined in entity config {1} not found or errored, was supposed to be at {2}. Shape part will be invisible.", shapePath, entity.Properties.Code, shapePath);
+                    continue;
+                }
+
+                partShape.SubclassForStepParenting(prefix);
+
+                var textures = entity.Properties.Client.Textures;
+                entityShape.StepParentShape(partShape, shapePath.ToShortString(), shapePathForLogging, entity.Api.Logger, (texcode, loc) =>
+                {
+                    if (prefix == null && textures.ContainsKey(texcode)) return;
+
+                    var cmpt = textures[prefix + "-" + texcode] = new CompositeTexture(loc);
+                    cmpt.Bake(entity.Api.Assets);
+                    clientAPI.EntityTextureAtlas.GetOrInsertTexture(cmpt.Baked.TextureFilenames[0], out int textureSubid, out _);
+                    cmpt.Baked.TextureSubId = textureSubid;
+                });
+            }
+        }
+
         public override ITexPositionSource GetTextureSource(ref EnumHandling handling) {
             ITexPositionSource source = null;
             foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
