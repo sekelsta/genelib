@@ -6,6 +6,9 @@
   "authors": ["sekelsta"],
   "version": "2.0.0-pre.1",
   "dependencies": { 
-	"game": "1.21.0-pre.1",
+	"game": "1.21.0-rc.1",
+  },
+  "custom": {
+    "logosource": "https://commons.wikimedia.org/wiki/File:Dna-163466.jpg"
   }
 }
