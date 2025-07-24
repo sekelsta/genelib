@@ -19,6 +19,8 @@ namespace Genelib
 {
     public class GenelibSystem : ModSystem
     {
+        public static bool AddAnimalInfoBehavior = false;
+
         public static readonly string modid = "genelib";
         public static AssetCategory genetics = null;
 
