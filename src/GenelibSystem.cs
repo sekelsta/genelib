@@ -1,6 +1,7 @@
 using Genelib.Extensions;
 using Genelib.Network;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -19,7 +20,6 @@ namespace Genelib
 {
     public class GenelibSystem : ModSystem
     {
-        public static bool ReplaceMultiplyBehavior = false;
         public static bool AddAnimalInfoBehavior = false;
 
         public static readonly string modid = "genelib";
@@ -45,6 +45,10 @@ namespace Genelib
             harmony.Patch(
                 typeof(EntityBehaviorGrow).GetMethod("BecomeAdult", BindingFlags.Instance | BindingFlags.NonPublic),
                 prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("BecomeAdult_Prefix", BindingFlags.Static | BindingFlags.Public)) 
+            );
+            harmony.Patch(
+                typeof(EntitySidedProperties).GetConstructor(BindingFlags.Instance | BindingFlags.Public, new[] { typeof(JsonObject[]), typeof(Dictionary<string, JsonObject>)}),
+                prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("EntitySidedProperties_Ctor_Prefix", BindingFlags.Static | BindingFlags.Public)) 
             );
 
             api.RegisterBlockClass("Genelib.BlockNest", typeof(BlockGeneticNest));
@@ -160,6 +164,28 @@ namespace Genelib
             if (!GenomeType.assetsReceived) {
                 throw new Exception("Connection failed: Genome type assets arrival timed out");
             }
+        }
+
+        public static bool EntitySidedProperties_Ctor_Prefix(EntitySidedProperties __instance, ref JsonObject[] behaviors, ref Dictionary<string, JsonObject> commonConfigs) {
+            if (commonConfigs == null || !commonConfigs.ContainsKey(GeneticMultiply.Code)) {
+                return true;
+            }
+            int multiplyIndex = -1;
+            for (int i = 0; i < behaviors.Length; ++i) {
+                string code = behaviors[i]["code"].AsString();
+                if (code == "multiply") {
+                    multiplyIndex = i;
+                }
+            }
+
+            if (multiplyIndex != -1) {
+                JObject multiplyJson = (JObject)(behaviors[multiplyIndex].Token);
+                multiplyJson.Property("code").Value = new JValue(GeneticMultiply.Code);
+            }
+
+            // Might have to also merge multiply commonconfig with genelib.multiply's for future mod compat
+
+            return true;
         }
     }
 }
