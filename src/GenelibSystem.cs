@@ -19,6 +19,7 @@ namespace Genelib
 {
     public class GenelibSystem : ModSystem
     {
+        public static bool ReplaceMultiplyBehavior = false;
         public static bool AddAnimalInfoBehavior = false;
 
         public static readonly string modid = "genelib";
