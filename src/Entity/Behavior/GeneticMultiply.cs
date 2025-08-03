@@ -350,7 +350,6 @@ namespace Genelib {
                 litter.Add(offspring);
             }
             string offspringGenes = genesDebug.Count == 0 ? "" : "\n    pgenes=" + String.Join("\n    pgenes=", genesDebug);
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " became pregnant with " + litter.Count + " offpsring (" + litterSize + " attempted), mother ID=" + entity.UniqueID() + ", father ID=" + sire.UniqueID() + offspringGenes);
 
             if (litter.Count == 0) {
                 if (litterSize > 0 && MiscarriageCooldown > 0) {
@@ -376,13 +375,9 @@ namespace Genelib {
         protected override void GiveBirth(float q) {
             int nextGeneration = entity.WatchedAttributes.GetInt("generation", 0) + 1;
             TreeAttribute[] litterData = Litter?.value;
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " id=" + entity.EntityId + " UID=" + entity.UniqueID() + " now giving birth to " + litterData.Length + " offpsring");
             foreach (TreeAttribute childData in litterData) {
-                entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " giving birth to child, mother ID=" + childData.GetLong("motherId") + ", father ID=" + childData.GetLong("fatherId"));
                 Entity spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
-                entity.Api.Logger.Notification("[genelib] Newborn " + spawn.Code + " pgenes=" + spawn.GetBehavior<EntityBehaviorGenetics>()?.Genome?.anonymous.ArrayToString());
             }
-            entity.Api.Logger.Notification("[genelib] Entity " + entity.Code + " id=" + entity.EntityId + " birth complete.");
             SetNotPregnant();
             TotalDaysLastBirth = entity.World.Calendar.TotalDays;
             TotalDaysCooldownUntil = entity.World.Calendar.TotalDays + MultiplyCooldownDaysMin + entity.World.Rand.NextDouble() * (MultiplyCooldownDaysMax - MultiplyCooldownDaysMin);
