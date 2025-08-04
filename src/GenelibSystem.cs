@@ -47,6 +47,10 @@ namespace Genelib
                 prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("BecomeAdult_Prefix", BindingFlags.Static | BindingFlags.Public)) 
             );
             harmony.Patch(
+                typeof(EntityBehaviorGrow).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.Public),
+                postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("Grow_Initialize_Postfix", BindingFlags.Static | BindingFlags.Public)) 
+            );
+            harmony.Patch(
                 typeof(EntitySidedProperties).GetConstructor(BindingFlags.Instance | BindingFlags.Public, new[] { typeof(JsonObject[]), typeof(Dictionary<string, JsonObject>)}),
                 prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("EntitySidedProperties_Ctor_Prefix", BindingFlags.Static | BindingFlags.Public)) 
             );
@@ -131,6 +135,13 @@ namespace Genelib
             adult.WatchedAttributes.CopyIfPresent("domesticationstatus", entity.WatchedAttributes);
 
             return true;
+        }
+
+        public static void Grow_Initialize_Postfix(EntityBehaviorGrow __instance, EntityProperties properties, JsonObject typeAttributes) {
+            IGameCalendar calendar = __instance.entity.World.Calendar;
+            if (typeAttributes.KeyExists("monthsToGrow")) {
+                __instance.HoursToGrow = typeAttributes["monthsToGrow"].AsFloat() * calendar.DaysPerMonth * calendar.HoursPerDay;
+            }
         }
 
         public static void SendServerAssets_Postfix(ServerMain __instance, IServerPlayer player) {
