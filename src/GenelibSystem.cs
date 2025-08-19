@@ -58,6 +58,8 @@ namespace Genelib
             api.RegisterBlockClass("Genelib.BlockNest", typeof(BlockGeneticNest));
             api.RegisterBlockEntityClass("Genelib.Nest", typeof(GeneticNest));
 
+            AiTaskRegistry.Register<AiTaskMate>("genelib.mate");
+
             api.RegisterEntityBehaviorClass(EntityBehaviorGenetics.Code, typeof(EntityBehaviorGenetics));
             api.RegisterEntityBehaviorClass(GeneticMultiply.Code, typeof(GeneticMultiply));
             api.RegisterEntityBehaviorClass(BehaviorAnimalInfo.Code, typeof(BehaviorAnimalInfo));
