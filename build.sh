@@ -20,8 +20,8 @@ dotnet run --project ./Build/CakeBuild/CakeBuild.csproj -- "$@"
 rm assets/genelib/lang/es-es.json
 rm -r bin/
 rm -r src/obj/
-rm "${VINTAGE_STORY_DEV}"/Mods/genelib_*.zip
-cp Build/Releases/genelib_*.zip "${VINTAGE_STORY_DEV}/Mods"
+rm "${VINTAGE_STORY}"/Mods/genelib_*.zip
+cp Build/Releases/genelib_*.zip "${VINTAGE_STORY}/Mods"
 
 endtime=$(($(date +%s%N)/1000000))
 buildtime=$(( endtime - prebuild ))
