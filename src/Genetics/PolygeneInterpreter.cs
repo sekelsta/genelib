@@ -2,21 +2,21 @@ using System;
 using Genelib.Extensions;
 using Vintagestory.API.Common.Entities;
 
+#nullable enable
+
 namespace Genelib {
     public class PolygeneInterpreter : GeneInterpreter {
-        private static readonly int NUM_DIVERSITY_GENES = 32;
-        private static readonly int NUM_VITALITY_GENES = 16;
-        internal static readonly int NUM_POLYGENES = NUM_DIVERSITY_GENES + NUM_VITALITY_GENES;
-
         public string Name => "Polygenes";
 
         void GeneInterpreter.Finalize(Genome genome, AlleleFrequencies frequencies, Random random) {
-            for (int i = 2 * NUM_DIVERSITY_GENES; i < 2 * (NUM_DIVERSITY_GENES + NUM_VITALITY_GENES); ++i) {
+            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+
+            for (int i = 2 * range.Start.Value; i < 2 * range.End.Value; ++i) {
                 if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
                     genome.anonymous[i] = 0;
                 }
             }
-            for (int i = NUM_DIVERSITY_GENES; i < NUM_DIVERSITY_GENES + NUM_VITALITY_GENES; ++i) {
+            for (int i = range.Start.Value; i < range.End.Value; ++i) {
                 if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
                     genome.anonymous[2 * i] = 0;
                 }
@@ -24,8 +24,10 @@ namespace Genelib {
         }
 
         private int countVitalityHomozygotes(Genome genome) {
+            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+
             int duplicates = 0;
-            for (int i = NUM_DIVERSITY_GENES; i < NUM_DIVERSITY_GENES + NUM_VITALITY_GENES; ++i) {
+            for (int i = range.Start.Value; i < range.End.Value; ++i) {
                 if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1] && genome.anonymous[2 * i] != 0) {
                     duplicates += 1;
                 }
@@ -40,14 +42,19 @@ namespace Genelib {
         void GeneInterpreter.Interpret(EntityBehaviorGenetics genetics) {
             Entity entity = genetics.entity;
             Genome genome = genetics.Genome;
-            int repeats = 0;
-            for (int i = 0; i < NUM_DIVERSITY_GENES; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
-                    repeats += 1;
+
+            Range range = genome.Type.Bitwise.TryGetRange("coi");
+            int numGenes = range.End.Value - range.Start.Value;
+            if (numGenes > 0) {
+                int repeats = 0;
+                for (int i = 0; i < numGenes; ++i) {
+                    if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
+                        repeats += 1;
+                    }
                 }
+                float coi = repeats / (float)numGenes;
+                entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
             }
-            float coi = repeats / (float)NUM_DIVERSITY_GENES;
-            entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
         }
     }
 }

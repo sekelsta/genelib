@@ -44,8 +44,8 @@
         <Private>true</Private>
     </Reference>
 
-    <Reference Include="DetailedAnimals">
-      <HintPath>../bin/$(Configuration)/Genelib.dll</HintPath>
+    <Reference Include="Genelib">
+      <HintPath>../Build/Releases/genelib/Genelib.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>
