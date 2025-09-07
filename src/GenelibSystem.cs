@@ -108,7 +108,7 @@ namespace Genelib
                 .RegisterMessageType<SetNameMessage>()
                 .RegisterMessageType<SetNoteMessage>()
                 .RegisterMessageType<ToggleBreedingMessage>()
-                .RegisterMessageType<GenomeTypesMessage>().SetMessageHandler<GenomeTypesMessage>(GenomeType.OnAssetsRecievedClient);
+                .RegisterMessageType<GenomeTypesMessage>().SetMessageHandler<GenomeTypesMessage>(GenomeType.OnAssetsReceivedClient);
 
             api.Event.LevelFinalize += WaitForGenomeAssets;
 

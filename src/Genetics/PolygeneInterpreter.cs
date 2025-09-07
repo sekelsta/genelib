@@ -4,31 +4,33 @@ using Vintagestory.API.Common.Entities;
 
 namespace Genelib {
     public class PolygeneInterpreter : GeneInterpreter {
-        private static readonly int NUM_DIVERSITY_GENES = 32;
-        private static readonly int NUM_VITALITY_GENES = 16;
-        internal static readonly int NUM_POLYGENES = NUM_DIVERSITY_GENES + NUM_VITALITY_GENES;
-
         public string Name => "Polygenes";
 
         void GeneInterpreter.FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
-            for (int i = 2 * NUM_DIVERSITY_GENES; i < 2 * (NUM_DIVERSITY_GENES + NUM_VITALITY_GENES); ++i) {
-                if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
-                    genome.anonymous[i] = 0;
+            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+
+            for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
+                bool homozygous = true;
+                for (int n = 0; n < genome.Ploidy; ++n) {
+                    if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
+                        genome.Anonymous[gene, n] = 0;
+                    }
+                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
                 }
-            }
-            for (int i = NUM_DIVERSITY_GENES; i < NUM_DIVERSITY_GENES + NUM_VITALITY_GENES; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
-                    genome.anonymous[2 * i] = 0;
-                }
+                if (homozygous) genome.Anonymous[gene, 0] = 0;
             }
         }
 
         private int countVitalityHomozygotes(Genome genome) {
+            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+
             int duplicates = 0;
-            for (int i = NUM_DIVERSITY_GENES; i < NUM_DIVERSITY_GENES + NUM_VITALITY_GENES; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1] && genome.anonymous[2 * i] != 0) {
-                    duplicates += 1;
+            for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
+                bool homozygous = true;
+                for (int n = 0; n < genome.Ploidy; ++n) {
+                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
                 }
+                if (homozygous) duplicates += 1;
             }
             return duplicates;
         }
@@ -40,14 +42,14 @@ namespace Genelib {
         void GeneInterpreter.Interpret(EntityBehaviorGenetics genetics) {
             Entity entity = genetics.entity;
             Genome genome = genetics.Genome;
-            int repeats = 0;
-            for (int i = 0; i < NUM_DIVERSITY_GENES; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
-                    repeats += 1;
-                }
+
+            Range range = genome.Type.Bitwise.TryGetRange("coi");
+            int numGenes = range.End.Value - range.Start.Value;
+            if (numGenes > 0) {
+                int repeats = genome.BitwiseHomozygotes(range);
+                float coi = repeats / (float)numGenes;
+                entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
             }
-            float coi = repeats / (float)NUM_DIVERSITY_GENES;
-            entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
         }
     }
 }

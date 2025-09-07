@@ -336,7 +336,7 @@ namespace Genelib {
                 AssetLocation offspringCode = SpawnEntityCodes[entity.World.Rand.Next(SpawnEntityCodes.Length)];
                 if (ourGenome != null && sireGenome != null) {
                     bool heterogametic = ourGenome.Type.SexDetermination.Heterogametic(entity.IsMale());
-                    Genome child = new Genome(ourGenome, sireGenome, heterogametic, entity.World.Rand);
+                    Genome child = Genome.Inherit(ourGenome, sireGenome, heterogametic, entity.World.Rand);
                     child.Mutate(GenelibConfig.MutationRate, entity.World.Rand);
                     TreeAttribute childGeneticsTree = (TreeAttribute) offspring.GetOrAddTreeAttribute("genetics");
                     if (ViabilityCheckDelay == 0 && child.IsEmbryonicLethal()) {
@@ -359,6 +359,7 @@ namespace Genelib {
                     offspring.SetString("fatherName", fatherName);
                 }
                 offspring.SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
+
                 litter.Add(offspring);
             }
 
