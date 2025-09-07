@@ -8,33 +8,56 @@ using Genelib.Extensions;
 
 namespace Genelib {
     public class AlleleFrequencies {
-        public GenomeType ForType { get; private set; }
-        public float[][] Autosomal { get; private set; }
-        public float[][] XZ { get; private set; }
-        public float[][] YW { get; private set; }
+        public GenomeType ForType { get; protected set; }
+        public float[]?[]? Autosomal { get; protected set; }
+        public float[]?[]? Bitwise { get; protected set; }
+        public float[]?[]? XZ { get; protected set; }
+        public float[]?[]? YW { get; protected set; }
 
         public AlleleFrequencies(GenomeType type) {
             ForType = type;
-            Autosomal = new float[type.Autosomal.GeneCount][];
-            XZ = new float[type.XZ.GeneCount][];
-            YW = new float[type.YW.GeneCount][];
-            // Ok to leave array contents null
         }
 
         public AlleleFrequencies(GenomeType type, JsonObject json) : this(type) {
-            parseFrequencies(json, "autosomal", Autosomal, type.Autosomal);
-            if (!parseFrequencies(json, "xz", XZ, type.XZ)) {
-                parseFrequencies(json, "sexlinked", XZ, type.XZ);
+            Autosomal = parseFrequencies(json["autosomal"], type.Autosomal);
+
+            JsonObject jsonXZ = json["xz"];
+            XZ = parseFrequencies(jsonXZ.Exists ? jsonXZ : json["sexlinked"], type.XZ);
+
+            YW = parseFrequencies(json["yw"], type.YW);
+
+            JsonObject jsonBitwise = json["bitwise"];
+            if (jsonBitwise.Exists) {
+                Bitwise = new float[type.Bitwise.GeneCount][];
+                foreach (JProperty jp in ((JObject) jsonBitwise.Token).Properties()) {
+                    string geneGroup = jp.Name;
+                    int groupSize = type.Bitwise.GroupSize(geneGroup);
+                    int ordinal = type.Bitwise.GroupOrdinal(geneGroup);
+                    if (jp.Value.Type == JTokenType.Array) {
+                        float[]? values = jp.Value.ToObject<float[]>();
+                        if (values == null) {
+                            throw new Exception("Improper format of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
+                        }
+                        if (values.Length > groupSize || values.Length < 1) {
+                            throw new Exception("Incorrect number of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
+                        }
+                        Bitwise[ordinal] = values;
+                    }
+                    else {
+                        float chance = new JsonObject(jp.Value).AsFloat();
+                        Bitwise[ordinal] = new float[] { chance };
+                    }
+                }
             }
-            parseFrequencies(json, "yw", YW, type.YW);
         }
 
-        private bool parseFrequencies(JsonObject json, string key, float[][] frequencies, NameMapping mappings) {
-            if (!json.KeyExists(key)) {
-                return false;
+        private float[]?[]? parseFrequencies(JsonObject json, NameMapping mappings) {
+            if (!json.Exists) {
+                return null;
             }
-            JsonObject genesObject = json[key];
-            foreach (JProperty jp in ((JObject) genesObject.Token).Properties()) {
+
+            float[]?[] frequencies = new float[mappings.GeneCount][];
+            foreach (JProperty jp in ((JObject) json.Token).Properties()) {
                 string geneName = jp.Name;
                 int geneID = mappings.GeneID(geneName);
                 string? defaultAlleleName = null;
@@ -66,13 +89,14 @@ namespace Genelib {
                 if (sum > 1) {
                     s = 1 / sum;
                 }
+
                 frequencies[geneID] = new float[list.Count];
-                frequencies[geneID][0] = s * list[0];
-                for (int i = 1; i < frequencies[geneID].Length; ++i) {
-                    frequencies[geneID][i] = frequencies[geneID][i - 1] + s * list[i];
+                frequencies[geneID]![0] = s * list[0];
+                for (int i = 1; i < frequencies[geneID]!.Length; ++i) {
+                    frequencies[geneID]![i] = frequencies[geneID]![i - 1] + s * list[i];
                 }
             }
-            return true;
+            return frequencies;
         }
     }
 }
