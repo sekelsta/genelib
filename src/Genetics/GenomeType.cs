@@ -12,7 +12,7 @@ namespace Genelib {
     [ProtoContract]
     public class GenomeType {
         internal static bool assetsReceived = false;
-        internal static volatile Dictionary<AssetLocation, GenomeType> loaded = new Dictionary<AssetLocation, GenomeType>();
+        internal static Dictionary<AssetLocation, GenomeType> loaded = new Dictionary<AssetLocation, GenomeType>();
         private static Dictionary<string, GeneInterpreter> interpreterMap = new Dictionary<string, GeneInterpreter>();
 
         public static void RegisterInterpreter(GeneInterpreter interpreter) {
@@ -25,14 +25,16 @@ namespace Genelib {
         public NameMapping XZ { get; protected set; }
         [ProtoMember(3)]
         public NameMapping YW { get; protected set; }
+        [ProtoMember(4)]
+        public NameGroupMapping Anonymous { get; protected set; }
+        [ProtoMember(5)]
+        public NameGroupMapping Bitwise { get; protected set; }
 
         // Not serialized, so make sure not to try accessing from client
         private Dictionary<string, GeneInitializer> initializers = new Dictionary<string, GeneInitializer>();
         public GeneInterpreter[] Interpreters { get; protected set; }
-        // TODO: Incorrect if polygene interpreter is registered in general but not on this genome type
-        public int AnonymousGeneCount { get => interpreterMap.ContainsKey("Polygenes") ? PolygeneInterpreter.NUM_POLYGENES : 0; }
 
-        [ProtoMember(4)]
+        [ProtoMember(6)]
         public SexDetermination SexDetermination { get; protected set; } = SexDetermination.XY;
 
         private AlleleFrequencies? defaultFrequencies;
@@ -48,10 +50,10 @@ namespace Genelib {
             }
         }
 
-        [ProtoMember(5)]
+        [ProtoMember(7)]
         public string Name { get; private set; }
 
-        [ProtoMember(6)]
+        [ProtoMember(8)]
         public string[] InterpreterNames {
             get => Interpreters.Select(x => x.Name).ToArray();
             set => Interpreters = value.Select(x => interpreterMap[x]).ToArray();
@@ -62,15 +64,19 @@ namespace Genelib {
             Autosomal = new NameMapping();
             XZ = new NameMapping();
             YW = new NameMapping();
+            Anonymous = new NameGroupMapping();
+            Bitwise = new NameGroupMapping();
             Interpreters = new GeneInterpreter[0];
         }
 
         private GenomeType(string name, JsonObject attributes) {
             this.Name = name;
             JsonObject genes = attributes["genes"];
-            Autosomal = parse(genes, "autosomal");
-            XZ = parse(genes, "xz");
-            YW = parse(genes, "yw");
+            Autosomal = parse(genes["autosomal"]);
+            XZ = parse(genes["xz"]);
+            YW = parse(genes["yw"]);
+            Anonymous = parseGrouped(genes["anonymous"]);
+            Bitwise = parseGrouped(genes["bitwise"]);
 
             if (attributes.KeyExists("initializers")) {
                 JsonObject initialization = attributes["initializers"];
@@ -88,19 +94,40 @@ namespace Genelib {
             }
         }
 
-        private NameMapping parse(JsonObject json, string key) {
-            if (!json.KeyExists(key)) {
+        private NameMapping parse(JsonObject json) {
+            if (!json.Exists) {
                 return new NameMapping();
             }
-            JsonObject[] genes = json[key].AsArray();
+            JsonObject[] genes = json.AsArray();
             string[] geneArray = new string[genes.Length];
             string[][] alleleArrays = new string[genes.Length][];
             for (int gene = 0; gene < genes.Length; ++gene) {
+                // Each gene object is expected to contain just one property, with the gene name as the key
                 JProperty jp = ((JObject) genes[gene].Token).Properties().First();
                 geneArray[gene] = jp.Name;
                 alleleArrays[gene] = new JsonObject(jp.Value).AsArray<string>();
             }
             return new NameMapping(geneArray, alleleArrays);
+        }
+
+        private NameGroupMapping parseGrouped(JsonObject json) {
+            if (!json.Exists) {
+                return new NameGroupMapping();
+            }
+            JsonObject[] genes = json.AsArray();
+            string[] groupNames = new string[genes.Length];
+            int[] groupSizes = new int[genes.Length];
+            for (int gene = 0; gene < genes.Length; ++gene) {
+                // Each gene object is expected to contain just one property, with the gene group name as the key
+                JProperty jp = ((JObject) genes[gene].Token).Properties().First();
+                groupNames[gene] = jp.Name;
+                int count = new JsonObject(jp.Value).AsInt();
+                if (count < 0) {
+                    throw new Exception(jp.Name + ": Can't have a negative number of genes! count=" + count);
+                }
+                groupSizes[gene] = count;
+            }
+            return new NameGroupMapping(groupNames, groupSizes);
         }
 
         public static void Load(IAsset asset) {
@@ -144,7 +171,7 @@ namespace Genelib {
             }
         }
 
-        internal static void OnAssetsRecievedClient(GenomeTypesMessage message) {
+        internal static void OnAssetsReceivedClient(GenomeTypesMessage message) {
             assetsReceived = true;
             if (message == null) throw new Exception("Null GenomeTypesMessage received, this could mean an error on the server");
             if (message.AssetLocations == null || message.GenomeTypes == null) return; // This happens if 0 genome types are loaded
