@@ -25,12 +25,14 @@ namespace Genelib {
         public NameMapping XZ { get; protected set; }
         [ProtoMember(3)]
         public NameMapping YW { get; protected set; }
+        [ProtoMember(4)]
+        public NameGroupMapping Anonymous { get; protected set; }
+        [ProtoMember(5)]
+        public NameGroupMapping Bitwise { get; protected set; }
 
         // Not serialized, so make sure not to try accessing from client
         private Dictionary<string, GeneInitializer> initializers = new Dictionary<string, GeneInitializer>();
         public GeneInterpreter[] Interpreters { get; protected set; }
-        // TODO: Incorrect if polygene interpreter is registered in general but not on this genome type
-        public int AnonymousGeneCount { get => interpreterMap.ContainsKey("Polygenes") ? PolygeneInterpreter.NUM_POLYGENES : 0; }
 
         [ProtoMember(4)]
         public SexDetermination SexDetermination { get; protected set; } = SexDetermination.XY;
@@ -61,6 +63,8 @@ namespace Genelib {
             Autosomal = new NameMapping();
             XZ = new NameMapping();
             YW = new NameMapping();
+            Anonymous = new NameGroupMapping();
+            Bitwise = new NameGroupMapping();
             Interpreters = new GeneInterpreter[0];
         }
 
@@ -70,6 +74,8 @@ namespace Genelib {
             Autosomal = parse(genes, "autosomal");
             XZ = parse(genes, "xz");
             YW = parse(genes, "yw");
+            Anonymous = parseGrouped(genes, "anonymous");
+            Bitwise = parseGrouped(genes, "bitwise");
 
             if (attributes.KeyExists("initializers")) {
                 JsonObject initialization = attributes["initializers"];
@@ -100,6 +106,24 @@ namespace Genelib {
                 alleleArrays[gene] = new JsonObject(jp.Value).AsArray<string>();
             }
             return new NameMapping(geneArray, alleleArrays);
+        }
+
+        private NameGroupMapping parseGrouped(JsonObject json, string key) {
+            if (!json.KeyExists(key)) {
+                return new NameGroupMapping();
+            }
+            JsonObject[] genes = json[key].AsArray();
+            Tuple<string, int>[] groups = new Tuple<string, int>[genes.Length];
+            for (int gene = 0; gene < genes.Length; ++gene) {
+                JProperty jp = ((JObject) genes[gene].Token).Properties().First();
+                string name = jp.Name;
+                int count = new JsonObject(jp.Value).AsInt();
+                if (count < 0) {
+                    throw new Exception(name + ": Can't have a negative number of genes!");
+                }
+                groups[gene] = new Tuple<string, int>(name, count);
+            }
+            return new NameGroupMapping(groups);
         }
 
         public static void Load(IAsset asset) {
