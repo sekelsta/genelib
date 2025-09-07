@@ -12,12 +12,14 @@ namespace Genelib {
     public class AlleleFrequencies {
         public GenomeType ForType { get; private set; }
         public float[][] Autosomal { get; private set; }
+        public float[][] Bitwise { get; private set; }
         public float[][] XZ { get; private set; }
         public float[][] YW { get; private set; }
 
         public AlleleFrequencies(GenomeType type) {
             ForType = type;
             Autosomal = new float[type.Autosomal.GeneCount][];
+            Bitwise = new float[type.Bitwise.GeneCount][];
             XZ = new float[type.XZ.GeneCount][];
             YW = new float[type.YW.GeneCount][];
             // Ok to leave array contents null
@@ -29,6 +31,26 @@ namespace Genelib {
                 parseFrequencies(json, "sexlinked", XZ, type.XZ);
             }
             parseFrequencies(json, "yw", YW, type.YW);
+
+            if (json.KeyExists("bitwise")) {
+                JsonObject genesObject = json["bitwise"];
+                foreach (JProperty jp in ((JObject) genesObject.Token).Properties()) {
+                    string geneGroup = jp.Name;
+                    int groupSize = type.Bitwise.GroupSize(geneGroup);
+                    int ordinal = type.Bitwise.GroupOrdinal(geneGroup);
+                    if (jp.Value.Type == JTokenType.Array) {
+                        float[] values = jp.Value.ToObject<float[]>();
+                        if (values.Length != groupSize) {
+                            throw new Exception("Incorrect number of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
+                        }
+                        Bitwise[ordinal] = values;
+                    }
+                    else {
+                        float chance = new JsonObject(jp.Value).AsFloat();
+                        Bitwise[ordinal] = new float[] { chance };
+                    }
+                }
+            }
         }
 
         private bool parseFrequencies(JsonObject json, string key, float[][] frequencies, NameMapping mappings) {

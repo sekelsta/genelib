@@ -9,6 +9,7 @@ namespace Genelib {
         public GenomeType Type  { get; private set; }
         public byte[] autosomal { get; private set; }
         public byte[] anonymous { get; private set; }
+        public byte[] bitwise { get; private set; }
         public byte[] primary_xz { get; private set; }
         public byte[] secondary_xz { get; private set; }
         public byte[] yw { get; private set; }
@@ -88,6 +89,36 @@ namespace Genelib {
             return secondary_xz == null;
         }
 
+        public int BitwiseSum(Range range) {
+            int total = 0;
+            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
+                int b = g % 8;
+                total += (bitwise[g/8] >> b) & 1;
+                total += (bitwise[g/8] >> (b + 1)) & 1;
+            }
+            return total;
+        }
+
+        public int BitwiseDominant(Range range) {
+            int total = 0;
+            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
+                int b = g % 8;
+                total += ((bitwise[g/8] >> b) & 1)
+                    | (bitwise[g/8] >> (b + 1)) & 1;
+            }
+            return total;
+        }
+
+        public int BitwiseRecessive(Range range) {
+            int total = 0;
+            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
+                int b = g % 8;
+                total += ((bitwise[g/8] >> b) & 1)
+                    & (bitwise[g/8] >> (b + 1)) & 1;
+            }
+            return total;
+        }
+
         private byte[] atLeastSize(byte[] given, int size) {
             if (given != null && given.Length >= size) {
                 return given;
@@ -108,8 +139,11 @@ namespace Genelib {
                 autosomal[2 * gene + 1] = getRandomAllele(frequencies.Autosomal[gene], random);
             }
 
-            anonymous = new byte[2 * PolygeneInterpreter.NUM_POLYGENES];
+            anonymous = new byte[2 * Type.Anonymous.GeneCount];
             random.NextBytes(anonymous);
+
+            bitwise = new byte[(int)Math.Ceiling(2 * Type.Bitwise.GeneCount / 8.0)];
+            random.NextBytes(bitwise);
 
             primary_xz = new byte[frequencies.XZ.Length];
             for (int gene = 0; gene < frequencies.XZ.Length; ++gene) {
@@ -168,6 +202,7 @@ namespace Genelib {
             }
             autosomal = inherit_autosomal(mother.autosomal, father.autosomal, random);
             anonymous = inherit_autosomal(mother.anonymous, father.anonymous, random);
+            bitwise = inherit_bitwise(mother.bitwise, father.bitwise, random);
             return this;
         }
 
@@ -184,6 +219,26 @@ namespace Genelib {
             for (int i = 0; i < length / 2; ++i) {
                 result[2 * i] = random.NextBool() ? maternal[2 * i] : maternal[2 * i + 1];
                 result[2 * i + 1] = random.NextBool() ? paternal[2 * i] : paternal[2 * i + 1];
+            }
+            return result;
+        }
+
+        protected virtual byte[] inherit_bitwise(byte[] maternal, byte[] paternal, Random random) {
+            if (maternal == null && paternal == null) {
+                return null;
+            }
+            if (maternal == null || paternal == null) {
+                throw new ArgumentException("Parent bitwise gene arrays should either both be null or both be non-null");
+            }
+            // If lengths do not match, assume the world used to use a newer version of the mod but now uses an older version
+            int length = Math.Min(maternal.Length, paternal.Length);
+            byte[] result = new byte[length];
+            for (int i = 0; i < length; ++i) {
+                for (int b = 3; b >= 0; --b) {
+                    byte m = (byte)(maternal[i] >> (byte)(2 * b + random.Next(2)));
+                    byte p = (byte)(paternal[i] >> (2 * b + random.Next(2)));
+                    result[i] |= (byte)((((m & 1) << 1) | (p & 1)) << 2 * b);
+                }
             }
             return result;
         }
@@ -221,9 +276,18 @@ namespace Genelib {
                 }
             }
             if (anonymous != null) {
-                for (int gene = 0; gene < anonymous.Length; ++gene) {
+                for (int gene = 0; gene < 2 * Type.Anonymous.GeneCount; ++gene) {
                     if (random.NextDouble() < p) {
                         anonymous[gene] = (byte)random.Next(256);
+                    }
+                }
+            }
+            if (bitwise != null) {
+                for (int gene = 0; gene < 2 * Type.Bitwise.GeneCount; ++gene) {
+                    for (int b = 0; b < 8; ++b) {
+                        if (random.NextDouble() < p) {
+                            bitwise[gene] ^= (byte)(1 << b);
+                        }
                     }
                 }
             }
@@ -334,11 +398,13 @@ namespace Genelib {
 
             byte[] autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArrayAttribute)?.value;
             byte[] anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArrayAttribute)?.value;
+            byte[] bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArrayAttribute)?.value;
             byte[] primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
             byte[] secondary_xz = (geneticsTree.GetAttribute("secondary_xz") as ByteArrayAttribute)?.value;
             byte[] yw = (geneticsTree.GetAttribute("yw") as ByteArrayAttribute)?.value;
             this.autosomal = atLeastSize(autosomal, 2 * type.Autosomal.GeneCount);
-            this.anonymous = atLeastSize(anonymous, 2 * type.AnonymousGeneCount);
+            this.anonymous = atLeastSize(anonymous, 2 * type.Anonymous.GeneCount);
+            this.bitwise = atLeastSize(bitwise, (int)Math.Ceiling(2 * Type.Bitwise.GeneCount / 8.0));
             this.primary_xz = atLeastSize(primary_xz, type.XZ.GeneCount);
             this.secondary_xz = atLeastSize(secondary_xz, type.XZ.GeneCount);
             this.yw = atLeastSize(yw, type.YW.GeneCount);
@@ -357,6 +423,12 @@ namespace Genelib {
             }
             else {
                 geneticsTree.SetAttribute("anonymous", new ByteArrayAttribute(anonymous));
+            }
+            if (bitwise == null) {
+                geneticsTree.RemoveAttribute("bitwise");
+            }
+            else {
+                geneticsTree.SetAttribute("bitwise", new ByteArrayAttribute(bitwise));
             }
             if (primary_xz == null) {
                 geneticsTree.RemoveAttribute("primary_xz");
@@ -384,7 +456,8 @@ namespace Genelib {
                 + ",\n    primary_xz=" + primary_xz.ArrayToString() 
                 + ",\n    secondary_xz=" + secondary_xz.ArrayToString() 
                 + ",\n    yw=" + yw.ArrayToString() 
-                + ",\n    anonymous=" + anonymous.ArrayToString() + " >>";
+                + ",\n    anonymous=" + anonymous.ArrayToString()
+                + ",\n    bitwise=" + bitwise.ArrayToString() + " >>";
         }
     }
 }

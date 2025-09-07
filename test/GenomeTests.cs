@@ -16,7 +16,7 @@ namespace Genelib.Test {
         {
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
 
-            string mammal = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], yw: [ { ylinked1: [\"a\", \"b\"] }, { ylinked2: [\"a\", \"b\"] }, ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, secondsies: {autosomal: { extension: { default: \"black\" }, tyrosinase: { default: \"white\" }, }, xz: { xlinked1: { default: \"b\" }, xlinked2: { default: \"b\" }, }, yw: { ylinked1: { default: \"b\" }, ylinked2: { default: \"b\" }, },} }}";
+            string mammal = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], yw: [ { ylinked1: [\"a\", \"b\"] }, { ylinked2: [\"a\", \"b\"] }, ], anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, secondsies: {autosomal: { extension: { default: \"black\" }, tyrosinase: { default: \"white\" }, }, xz: { xlinked1: { default: \"b\" }, xlinked2: { default: \"b\" }, }, yw: { ylinked1: { default: \"b\" }, ylinked2: { default: \"b\" }, },} }}";
             GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(mammal), "mammal", null));
 
             string bird = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], yw: [ { ylinked1: [\"a\", \"b\"] }, { ylinked2: [\"a\", \"b\"] }, ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"zw\", initializers: { defaultinitializer: {} }}";
@@ -33,6 +33,9 @@ namespace Genelib.Test {
             Assert.NotNull(female.primary_xz, "Female mammal should have primary X chromosome");
             Assert.NotNull(female.secondary_xz, "Female mammal should have secondary X chromosome");
             Assert.Null(female.yw, "Female mammal should not have Y chromosome");
+
+            Assert.AreEqual(0, female.Type.Bitwise.TryGetRange("thisgenedoesnotexist").Start.Value);
+            Assert.AreEqual(0, female.Type.Bitwise.TryGetRange("thisgenedoesnotexist").End.Value);
         }
 
         [Test]
