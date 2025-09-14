@@ -131,7 +131,7 @@ namespace Genelib {
                         GenomeType genomeType = spawnType.GetGenomeType();
                         if (genomeType != null) {
                             Genome childGenome = new Genome(genomeType, chickData);
-                            if (childGenome.EmbryonicLethal()) {
+                            if (childGenome.IsEmbryonicLethal()) {
                                 chickCode = null;
                                 chickData.SetString("code", "");
                             }

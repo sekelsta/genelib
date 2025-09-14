@@ -24,7 +24,7 @@ namespace Genelib {
         // Called during pregnancy. If you override this, you should aso override Finalize(). Mother and offspring
         // should normally use the same GeneInterpreter, but if they are different, the mother's will be the one
         // called here.
-        bool EmbryonicLethal(Genome genome) {
+        bool IsEmbryonicLethal(Genome genome) {
             return false;
         }
 

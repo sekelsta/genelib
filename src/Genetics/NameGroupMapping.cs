@@ -3,22 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-#nullable enable
-
 namespace Genelib {
     [ProtoContract]
     public struct NameGroupMapping {
         [ProtoMember(1)]
-        private readonly Tuple<string, int>[] groups;
+        public readonly string[] GroupNames;
+        [ProtoMember(2)]
+        public readonly int[] GroupSizes;
 
         private int geneCount = -1;
-        public int GeneCount { get => geneCount != -1 ? geneCount : geneCount = groups.Sum(x => x.Item2); }
+        public int GeneCount { get => geneCount != -1 ? geneCount : geneCount = GroupSizes.Sum(); }
 
-        public int GeneGroupCount { get => groups.Length; }
+        public int GeneGroupCount { get => GroupSizes.Length; }
 
         public int GroupOrdinal(string name) {
-            for (int i = 0; i < groups.Length; ++i) {
-                if (groups[i].Item1 == name) {
+            for (int i = 0; i < GroupNames.Length; ++i) {
+                if (GroupNames[i] == name) {
                     return i;
                 }
             }
@@ -26,12 +26,7 @@ namespace Genelib {
         }
 
         public int GroupSize(string name) {
-            foreach (var entry in groups) {
-                if (entry.Item1 == name) {
-                    return entry.Item2;
-                }
-            }
-            throw new ArgumentException(name + " was not found among gene group names");
+            return GroupSizes[GroupOrdinal(name)];
         }
 
         public Range GeneRange(string name) {
@@ -44,22 +39,27 @@ namespace Genelib {
 
         public Range TryGetRange(string name) {
             int start = 0;
-            for (int i = 0; i < groups.Length; ++i) {
-                if (groups[i].Item1 == name) {
-                    int end = start + groups[i].Item2;
+            for (int i = 0; i < GroupNames.Length; ++i) {
+                if (GroupNames[i] == name) {
+                    int end = start + GroupSizes[i];
                     return start..end;
                 }
-                start += groups[i].Item2;
+                start += GroupSizes[i];
             }
             return 0..0;
         }
 
         public NameGroupMapping() {
-            groups = new Tuple<string, int>[0];
+            GroupNames = new string[0];
+            GroupSizes = new int[0];
         }
 
-        public NameGroupMapping(Tuple<string, int>[] groups) {
-            this.groups = groups;
+        public NameGroupMapping(string[] groupNames, int[] groupSizes) {
+            if (groupNames.Length != groupSizes.Length) {
+                throw new ArgumentException($"Cannot create name group mapping with inconsistent number of total groups. Names: {groupNames.Length}, Sizes: {groupSizes.Length}");
+            }
+            GroupNames = groupNames;
+            GroupSizes = groupSizes;
         }
     }
 }
