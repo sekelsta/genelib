@@ -121,7 +121,7 @@ namespace Genelib {
                         foreach (TreeAttribute childTree in Litter.value) {
                             if (childTree.GetBool("viable", true) == false) continue;
                             Genome childGenome = new Genome(gb.Genome.Type, childTree);
-                            if (!childGenome.EmbryonicLethal()) {
+                            if (!childGenome.IsEmbryonicLethal()) {
                                 surviving.Add(childTree);
                             }
                         }

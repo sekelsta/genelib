@@ -35,7 +35,7 @@ namespace Genelib {
             return duplicates;
         }
 
-        bool GeneInterpreter.EmbryonicLethal(Genome genome) {
+        bool GeneInterpreter.IsEmbryonicLethal(Genome genome) {
             return countVitalityHomozygotes(genome) >= 4;
         }
 
