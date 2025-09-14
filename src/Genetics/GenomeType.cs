@@ -114,17 +114,18 @@ namespace Genelib {
                 return new NameGroupMapping();
             }
             JsonObject[] genes = json[key].AsArray();
-            Tuple<string, int>[] groups = new Tuple<string, int>[genes.Length];
+            string[] groupNames = new string[genes.Length];
+            int[] groupSizes = new int[genes.Length];
             for (int gene = 0; gene < genes.Length; ++gene) {
                 JProperty jp = ((JObject) genes[gene].Token).Properties().First();
-                string name = jp.Name;
+                groupNames[gene] = jp.Name;
                 int count = new JsonObject(jp.Value).AsInt();
                 if (count < 0) {
-                    throw new Exception(name + ": Can't have a negative number of genes!");
+                    throw new Exception(jp.Name + ": Can't have a negative number of genes! count=" + count);
                 }
-                groups[gene] = new Tuple<string, int>(name, count);
+                groupSizes[gene] = count;
             }
-            return new NameGroupMapping(groups);
+            return new NameGroupMapping(groupNames, groupSizes);
         }
 
         public static void Load(IAsset asset) {

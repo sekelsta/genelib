@@ -1,5 +1,7 @@
 using Genelib.Extensions;
 using System;
+using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using Vintagestory.API.Datastructures;
 
 #nullable disable
@@ -7,118 +9,334 @@ using Vintagestory.API.Datastructures;
 namespace Genelib {
     public class Genome {
         public GenomeType Type  { get; private set; }
-        public byte[] autosomal { get; private set; }
-        public byte[] anonymous { get; private set; }
-        public byte[] bitwise { get; private set; }
-        public byte[] primary_xz { get; private set; }
-        public byte[] secondary_xz { get; private set; }
-        public byte[] yw { get; private set; }
+        public readonly int Ploidy = 2;
+        // Dimensions are [genes, ploidy]
+        public byte[,] Autosomal { get; private set; }
+        public byte[,] Anonymous { get; private set; }
+        public byte[,] XZ { get; private set; }
+        public byte[,]? YW { get; private set; }
+        // A compact way to store numerous genes each with only 2 possible alleles
+        // Format: Basic layout similar to autosomal genes (gene copies grouped), but compressed down to where each allele is only 1 bit.
+        // Across the bytes in the array the order is as you'd expect, starting at index 0 and increasing.
+        // Within each byte, the order is right to left - 0th is 0 bitshifts from the right, 1 is one bitshift from the right, etc.
+        public byte[] Bitwise { get; private set; }
 
-        public byte Autosomal(int gene, int n) {
-            return autosomal[2 * gene + n];
-        }
-
-        public void Autosomal(int gene, int n, byte v) {
-            autosomal[2 * gene + n] = v;
-        }
-
-        public byte Anonymous(int gene, int n) {
-            return anonymous[2 * gene + n];
-        }
-
-        public void Anonymous(int gene, int n, byte v) {
-            anonymous[2 * gene + n] = v;
-        }
-
-        public byte XZ(int gene, int n) {
-            return n == 0 ? primary_xz[gene] : secondary_xz[gene];
-        }
-
-        public void XZ(int gene, int n, byte v) {
-            if (n == 0) {
-                primary_xz[gene] = v;
+        // Checks if any allele matches any of the given alleles, for an autosomal gene
+        public bool HasAllele(int gene, params byte[] alleles) {
+            bool result = false;
+            for (int n = 0; n < Ploidy; ++n) {
+                foreach (byte a in alleles) {
+                    result = result || Autosomal[gene, n] == a;
+                }
             }
-            else {
-                secondary_xz[gene] = v;
+            return result;
+        }
+
+        // Checks if every allele matches at least one of the given alleles, for an autosomal gene
+        public bool HasOnlyAlleles(int gene, params byte[] alleles) {
+            bool result = true;
+            for (int n = 0; n < Ploidy; ++n) {
+                bool matches = false;
+                foreach (byte a in alleles) {
+                    matches = matches || Autosomal[gene, n] == a;
+                }
+                result = result && matches;
             }
+            return result;
         }
 
-        public byte YW(int gene) {
-            return yw[gene];
+        // Checks if any allele matches any of the given alleles, for a gene on the X or Z chromosome
+        public bool HasSexlinked(int gene, params byte[] alleles) {
+            bool result = false;
+            for (int n = 0; n < XZ.GetLength(1); ++n) {
+                foreach (byte a in alleles) {
+                    result = result || XZ[gene, n] == a;
+                }
+            }
+            return result;
         }
 
-        public void YW(int gene, byte v) {
-            yw[gene] = v;
+        // Checks if every allele matches at least one of the given alleles, for a gene on the X or Z chromosome
+        public bool HasOnlySexlinked(int gene, params byte[] alleles) {
+            bool result = false;
+            for (int n = 0; n < XZ.GetLength(1); ++n) {
+                bool matches = false;
+                foreach (byte a in alleles) {
+                    matches = matches || XZ[gene, n] == a;
+                }
+                result = result && matches;
+            }
+            return result;
         }
 
-        public bool HasAutosomal(int gene, byte v) {
-            return Autosomal(gene, 0) == v || Autosomal(gene, 1) == v;
+        // Checks if any allele matches any of the given alleles, for a gene on the Y or W chromosome
+        [MemberNotNull(nameof(YW))]
+        public bool HasHeterogametic(int gene, params byte[] alleles) {
+            bool result = false;
+            for (int n = 0; n < YW.GetLength(1); ++n) {
+                foreach (byte a in alleles) {
+                    result = result || YW[gene, n] == a;
+                }
+            }
+            return result;
         }
 
-        public bool HasAutosomal(int gene, byte v1, byte v2) {
-            byte g1 = Autosomal(gene, 0);
-            byte g2 = Autosomal(gene, 1);
-            return g1 == v1 || g2 == v1 || g1 == v2 || g2 == v2;
+        // Checks if every allele matches at least one of the given alleles, for a gene on the Y or W chromosome
+        [MemberNotNull(nameof(YW))]
+        public bool HasOnlyHeterogametic(int gene, params byte[] alleles) {
+            bool result = false;
+            for (int n = 0; n < YW.GetLength(1); ++n) {
+                bool matches = false;
+                foreach (byte a in alleles) {
+                    matches = matches || YW[gene, n] == a;
+                }
+                result = result && matches;
+            }
+            return result;
         }
 
-        public bool HasAutosomal(int gene, byte v1, byte v2, byte v3) {
-            byte g1 = Autosomal(gene, 0);
-            byte g2 = Autosomal(gene, 1);
-            return g1 == v1 || g2 == v1 || g1 == v2 || g2 == v2 || g1 == v3 || g2 == v3;
+        public bool IsHomogametic() {
+            return XZ.GetLength(1) == Ploidy;
         }
 
-        public bool HasAutosomal(int gene, byte v1, byte v2, byte v3, byte v4) {
-            byte g1 = Autosomal(gene, 0);
-            byte g2 = Autosomal(gene, 1);
-            return g1 == v1 || g2 == v1 || g1 == v2 || g2 == v2 || g1 == v3 || g2 == v3 || g1 == v4 || g2 == v4;
-        }
-
-        public bool Homozygous(int gene, byte v) {
-            return Autosomal(gene, 0) == v && Autosomal(gene, 1) == v;
-        }
-
-        public bool HasXZ(int gene, byte v) {
-            return (primary_xz != null && primary_xz[gene] == v) || (secondary_xz != null && secondary_xz[gene] == v);
-        }
-
-        public bool HomozygousXZ(int gene, byte v) {
-            return primary_xz != null && primary_xz[gene] == v && secondary_xz != null && secondary_xz[gene] == v;
-        }
-
-        public bool Heterogametic() {
-            return secondary_xz == null;
+        public bool IsHeterogametic() {
+            return !IsHomogametic();
         }
 
         public int BitwiseSum(Range range) {
             int total = 0;
-            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
+            for (int g = Ploidy * range.Start.Value; g < Ploidy * range.End.Value; ++g) {
                 int b = g % 8;
-                total += (bitwise[g/8] >> b) & 1;
-                total += (bitwise[g/8] >> (b + 1)) & 1;
+                total += (Bitwise[g/8] >> b) & 1;
             }
             return total;
         }
 
         public int BitwiseDominant(Range range) {
             int total = 0;
-            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
-                int b = g % 8;
-                total += ((bitwise[g/8] >> b) & 1)
-                    | (bitwise[g/8] >> (b + 1)) & 1;
+            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+                int v = 0;
+                for (int i = 0; i < Ploidy; ++i) {
+                    int index = (Ploidy * g + i) / 8;
+                    int offset = (Ploidy * g + i) % 8;
+                    v |= (Bitwise[index] >> offset) & 1;
+                }
+                total += v;
             }
             return total;
         }
 
         public int BitwiseRecessive(Range range) {
             int total = 0;
-            for (int g = 2 * range.Start.Value; g < 2 * range.End.Value; ++g) {
-                int b = g % 8;
-                total += ((bitwise[g/8] >> b) & 1)
-                    & (bitwise[g/8] >> (b + 1)) & 1;
+            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+                int v = 1;
+                for (int i = 0; i < Ploidy; ++i) {
+                    int index = (Ploidy * g + i) / 8;
+                    int offset = (Ploidy * g + i) % 8;
+                    v &= (Bitwise[index] >> offset) & 1;
+                }
+                total += v;
             }
             return total;
         }
 
+        public bool HasAllele(string gene, params string[] alleles) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            return HasAllele(geneID, alleles.Select(allele => Type.Autosomal.AlleleID(geneID, allele)).ToArray());
+        }
+
+        public bool HasOnlyAlleles(string gene, params string[] alleles) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            return HasOnlyAlleles(geneID, alleles.Select(allele => Type.Autosomal.AlleleID(geneID, allele)).ToArray());
+        }
+
+        public bool HasSexlinked(string gene, params string[] alleles) {
+            int geneID = Type.XZ.GeneID(gene);
+            return HasSexlinked(geneID, alleles.Select(allele => Type.XZ.AlleleID(geneID, allele)).ToArray());
+        }
+
+        public bool HasOnlySexlinked(string gene, params string[] alleles) {
+            int geneID = Type.XZ.GeneID(gene);
+            return HasOnlySexlinked(geneID, alleles.Select(allele => Type.XZ.AlleleID(geneID, allele)).ToArray());
+        }
+
+        [MemberNotNull(nameof(YW))]
+        public bool HasHeterogametic(string gene, params string[] alleles) {
+            int geneID = Type.YW.GeneID(gene);
+            return HasHeterogametic(geneID, alleles.Select(allele => Type.YW.AlleleID(geneID, allele)).ToArray());
+        }
+
+        [MemberNotNull(nameof(YW))]
+        public bool HasOnlyHeterogametic(string gene, params string[] alleles) {
+            int geneID = Type.YW.GeneID(gene);
+            return HasOnlyHeterogametic(geneID, alleles.Select(allele => Type.YW.AlleleID(geneID, allele)).ToArray());
+        }
+
+        public void SetAutosomal(string gene, int n, string allele) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
+            Autosomal[geneID, n] = alleleID;
+        }
+
+        public void SetHomozygous(string gene, string allele) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
+            for (int n = 0; n < Ploidy; ++n) {
+                Autosomal[geneID, n] = alleleID;
+            }
+        }
+
+        public void SetNotHomozygousFor(string gene, string avoidAllele, AlleleFrequencies frequencies, string fallbackAllele) {
+            int geneID = Type.Autosomal.GeneID(gene);
+            byte avoidID = Type.Autosomal.AlleleID(geneID, avoidAllele);
+            if (HasOnlyAlleles(geneID, avoidID)) {
+                float[] f = frequencies.Autosomal[geneID];
+                for (int i = 0; i < f.Length; ++i) {
+                    if (i == avoidID) {
+                        continue;
+                    }
+                    if (f[i] > 0) {
+                        Autosomal[geneID, 0] = (byte) i;
+                        break;
+                    }
+                }
+                if (Autosomal[geneID, 0] == avoidID) {
+                    Autosomal[geneID, 0] = Type.Autosomal.AlleleID(geneID, fallbackAllele);
+                }
+            }
+        }
+
+        public bool IsEmbryonicLethal() {
+            foreach (GeneInterpreter interpreter in Type.Interpreters) {
+                if (interpreter.IsEmbryonicLethal(this)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        protected Genome(GenomeType type, int ploidy) {
+            Type = type;
+            Ploidy = ploidy;
+
+            Autosomal = new byte[Type.Autosomal.GeneCount, Ploidy];
+            Anonymous = new byte[Type.Anonymous.GeneCount, Ploidy];
+
+            Bitwise = new byte[(int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0)];
+
+            // Leaves the sex chromosomes uninitialized
+            XZ = null!;
+        }
+
+        public Genome(AlleleFrequencies frequencies, bool heterogametic, Random random) : this(frequencies.ForType, 2) {
+            for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
+                for (int n = 0; n < Ploidy; ++n) {
+                    Autosomal[gene, n] = getRandomAllele(frequencies.Autosomal[gene], random);
+                }
+            }
+
+            byte[] buffer = new byte[Anonymous.GetLength(0) * Anonymous.GetLength(1)];
+            random.NextBytes(buffer);
+            Buffer.BlockCopy(buffer, 0, Anonymous, 0, buffer.Length);
+
+            int i = 0;
+            for (int group = 0; group < Type.Bitwise.GeneGroupCount; ++group) {
+                for (int gene = 0; gene < Type.Bitwise.GroupSizes[group]; ++gene) {
+                    float chance = frequencies.Bitwise[group][Math.Min(gene, frequencies.Bitwise[group].Length)];
+                    for (int n = 0; n < Ploidy; ++n) {
+                        if (random.NextSingle() < chance) {
+                            Bitwise[i/8] |= (byte) (1 << (i % 8));
+                        }
+                        i += 1;
+                    }
+                }
+            }
+
+            if (heterogametic) {
+                YW = new byte[Ploidy/2, Type.YW.GeneCount];
+                XZ = new byte[Ploidy/2, Type.XZ.GeneCount];
+            }
+            else {
+                XZ = new byte[Ploidy, Type.XZ.GeneCount];
+            }
+
+            for (int gene = 0; gene < frequencies.XZ.Length; ++gene) {
+                for (int n = 0; n < XZ.GetLength(1); ++n) {
+                    XZ[gene, n] = getRandomAllele(frequencies.XZ[gene], random);
+                }
+            }
+
+            for (int gene = 0; gene < frequencies.YW.Length; ++gene) {
+                for (int n = 0; n < YW.GetLength(1); ++n) {
+                    YW[n, gene] = getRandomAllele(frequencies.YW[gene], random);
+                }
+            }
+        }
+
+        protected byte getRandomAllele(float[] alleles, Random random) {
+            if (alleles == null) {
+                return 0;
+            }
+            float f = random.NextSingle();
+            byte a = 0;
+            for ( ; a < alleles.Length && alleles[a] < f; ++a);
+            return a;
+        }
+
+        public virtual Genome CreateGamete(bool heterogametic, Random random) {
+            if (Ploidy % 2 != 0) {
+                throw new InvalidOperationException("Not supported for odd ploidy (n=" + Ploidy + "). Genome type: " + Type.Name);
+            }
+            Genome gamete = new Genome(Type, Ploidy / 2);
+
+            gamete.Autosomal = SplitGenes(gamete.Autosomal, Autosomal, random);
+            gamete.Anonymous = SplitGenes(gamete.Anonymous, Anonymous, random);
+
+            for (int p = 0; p < gamete.Ploidy; ++p) {
+                for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
+                    int n = random.Next(2);
+                    int gIndex = gamete.Ploidy * gene + p;
+                    int pIndex = Ploidy * gene + 2 * p + n;
+                    gamete.Bitwise[gIndex / 8] |= ((Bitwise[pIndex / 8] >> (pIndex % 8)) & 1) << (gIndex % 8);
+                }
+            }
+
+            if (this.IsHeterogametic()) {
+                if (heterogametic) {
+                    gamete.YW = this.YW;
+                }
+                else {
+                    gamete.XZ = this.XZ;
+                }
+            }
+            else {
+                gamete.XZ = new byte[Type.XZ.GeneCount, gamete.Ploidy];
+                gamete.XZ = SplitGenes(XZ, random);
+            }
+
+            return gamete;
+        }
+
+        protected static byte[,] SplitGenes(byte[,] gamete, byte[,] parent, Random random) {
+            for (int p = 0; p < gamete.GetLength(1); ++p) {
+                int n = random.NextInt(2);
+                for (int gene = 0; gene < parent.GetLength(0); ++gene) {
+
+                    n = random.NextInt(2);
+                }
+            }
+        }
+
+        public virtual Genome Join(Genome other) {
+            Genome zygote = new Genome(Type, this.Ploidy + other.Ploidy);
+            zygote.YW = this.YW ?? other.YW;
+            // TODO: Join logic
+        }
+
+        public static Genome Inherit(Genome mother, Genome father, bool isHeterogametic, Random random) {
+            return mother.CreateGamete(isHeterogametic, random).Join(father.CreateGamete(isHeterogametic, random));
+        }
+/*
         private byte[] atLeastSize(byte[] given, int size) {
             if (given != null && given.Length >= size) {
                 return given;
@@ -129,54 +347,6 @@ namespace Genelib {
             }
             Array.Copy(given, array, given.Length);
             return array;
-        }
-
-        public Genome(AlleleFrequencies frequencies, bool heterogametic, Random random) {
-            Type = frequencies.ForType;
-            autosomal = new byte[2 * frequencies.Autosomal.Length];
-            for (int gene = 0; gene < frequencies.Autosomal.Length; ++gene) {
-                autosomal[2 * gene] = getRandomAllele(frequencies.Autosomal[gene], random);
-                autosomal[2 * gene + 1] = getRandomAllele(frequencies.Autosomal[gene], random);
-            }
-
-            anonymous = new byte[2 * Type.Anonymous.GeneCount];
-            random.NextBytes(anonymous);
-
-            bitwise = new byte[(int)Math.Ceiling(2 * Type.Bitwise.GeneCount / 8.0)];
-            random.NextBytes(bitwise);
-
-            primary_xz = new byte[frequencies.XZ.Length];
-            for (int gene = 0; gene < frequencies.XZ.Length; ++gene) {
-                primary_xz[gene] = getRandomAllele(frequencies.XZ[gene], random);
-            }
-
-            if (heterogametic) {
-                yw = new byte[frequencies.YW.Length];
-                for (int gene = 0; gene < frequencies.YW.Length; ++gene) {
-                    yw[gene] = getRandomAllele(frequencies.XZ[gene], random);
-                }
-            }
-            else {
-                secondary_xz = new byte[primary_xz.Length];
-                for (int gene = 0; gene < frequencies.XZ.Length; ++gene) {
-                    secondary_xz[gene] = getRandomAllele(frequencies.XZ[gene], random);
-                }
-            }
-        }
-
-        public Genome(Genome mother, Genome father, bool heterogametic, Random random) {
-            this.Type = mother.Type;
-            Inherit(mother, father, heterogametic, random);
-        }
-
-        private byte getRandomAllele(float[] alleles, Random random) {
-            if (alleles == null) {
-                return 0;
-            }
-            float f = random.NextSingle();
-            byte a = 0;
-            for ( ; a < alleles.Length && alleles[a] < f; ++a);
-            return a;
         }
 
         protected virtual Genome Inherit(Genome mother, Genome father, bool isHeterogametic, Random random) {
@@ -214,11 +384,11 @@ namespace Genelib {
                 throw new ArgumentException("Parent autosomal gene arrays should either both be null or both be non-null");
             }
             // If lengths do not match, assume the world used to use a newer version of the mod but now uses an older version
-            int length = Math.Min(maternal.Length, paternal.Length);
+            int length = Math.Min(maternal.Length / maternal.Ploidy, paternal.Length / paternal.Ploidy);
             byte[] result = new byte[length];
-            for (int i = 0; i < length / 2; ++i) {
-                result[2 * i] = random.NextBool() ? maternal[2 * i] : maternal[2 * i + 1];
-                result[2 * i + 1] = random.NextBool() ? paternal[2 * i] : paternal[2 * i + 1];
+            for (int i = 0; i < length; ++i) {
+                result[Ploidy * i] = random.NextBool() ? maternal[maternal.Ploidy * i] : maternal[maternal.Ploidy * i + 1];
+                result[Ploidy * i + 1] = random.NextBool() ? paternal[paternal.Ploidy * i] : paternal[paternal.Ploidy * i + 1];
             }
             return result;
         }
@@ -257,143 +427,56 @@ namespace Genelib {
             }
             return result;
         }
-
+*/
         public virtual Genome Mutate(double p, Random random) {
-            if (autosomal != null) {
-                for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
-                    for (int n = 0; n < 2; ++n) {
-                        if (random.NextDouble() < p) {
-                            Autosomal(gene, n, (byte) random.Next(Type.Autosomal.AlleleCount(gene)));
-                        }
-                    }
-                }
-                if (Type.Autosomal.TryGetGeneID("KIT", out int KIT)) {
-                    for (int n = 0; n < 2; ++n) {
-                        if (random.NextDouble() < 10 * p) {
-                            Autosomal(KIT, n, (byte) random.Next(Type.Autosomal.AlleleCount(KIT)));
-                        }
-                    }
-                }
-            }
-            if (anonymous != null) {
-                for (int gene = 0; gene < 2 * Type.Anonymous.GeneCount; ++gene) {
+            for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
+                for (int n = 0; n < Ploidy; ++n) {
                     if (random.NextDouble() < p) {
-                        anonymous[gene] = (byte)random.Next(256);
+                        Autosomal[gene, n] = (byte) random.Next(Type.Autosomal.AlleleCount(gene));
                     }
                 }
             }
-            if (bitwise != null) {
-                for (int gene = 0; gene < 2 * Type.Bitwise.GeneCount; ++gene) {
-                    for (int b = 0; b < 8; ++b) {
-                        if (random.NextDouble() < p) {
-                            bitwise[gene] ^= (byte)(1 << b);
-                        }
+            if (Type.Autosomal.TryGetGeneID("KIT", out int KIT)) {
+                for (int n = 0; n < Ploidy; ++n) {
+                    if (random.NextDouble() < 10 * p) {
+                        Autosomal[KIT, n] = (byte) random.Next(Type.Autosomal.AlleleCount(KIT));
                     }
                 }
             }
-            if (primary_xz != null) {
-                for (int gene = 0; gene < Type.XZ.GeneCount; ++gene) {
+            for (int gene = 0; gene < Ploidy * Type.Anonymous.GeneCount; ++gene) {
+                for (int n = 0; n < Ploidy; ++n) {
                     if (random.NextDouble() < p) {
-                        XZ(gene, 0, (byte) random.Next(Type.XZ.AlleleCount(gene)));
+                        Anonymous[gene, n] = (byte)random.Next(256);
                     }
                 }
             }
-            if (secondary_xz != null) {
-                for (int gene = 0; gene < Type.XZ.GeneCount; ++gene) {
+            for (int gene = 0; gene < Ploidy * Type.Bitwise.GeneCount; ++gene) {
+                for (int b = 0; b < 8; ++b) {
                     if (random.NextDouble() < p) {
-                        XZ(gene, 1, (byte) random.Next(Type.XZ.AlleleCount(gene)));
+                        Bitwise[gene] ^= (byte)(1 << b);
                     }
                 }
             }
-            if (yw != null) {
+            for (int gene = 0; gene < Type.XZ.GeneCount; ++gene) {
+                for (int n = 0; n < XZ.GetLength(1); ++n) {
+                    if (random.NextDouble() < p) {
+                        XZ[gene, 0] = (byte) random.Next(Type.XZ.AlleleCount(gene));
+                    }
+                }
+            }
+            if (YW != null) {
                 for (int gene = 0; gene < Type.YW.GeneCount; ++gene) {
-                    if (random.NextDouble() < p) {
-                        YW(gene, (byte) random.Next(Type.YW.AlleleCount(gene)));
+                    for (int n = 0; n < YW.GetLength(1); ++n) {
+                        if (random.NextDouble() < p) {
+                            YW[gene, n] = (byte) random.Next(Type.YW.AlleleCount(gene));
+                        }
                     }
                 }
             }
             return this;
         }
 
-        public bool EmbryonicLethal() {
-            foreach (GeneInterpreter interpreter in Type.Interpreters) {
-                if (interpreter.EmbryonicLethal(this)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool HasAutosomal(string gene, string allele) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            return HasAutosomal(geneID, Type.Autosomal.AlleleID(geneID, allele));
-        }
-
-        public bool HasAutosomal(string gene, string allele1, string allele2) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            return HasAutosomal(geneID, Type.Autosomal.AlleleID(geneID, allele1), Type.Autosomal.AlleleID(geneID, allele2));
-        }
-
-        public bool HasAutosomal(string gene, string allele1, string allele2, string allele3) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            return HasAutosomal(geneID, Type.Autosomal.AlleleID(geneID, allele1), Type.Autosomal.AlleleID(geneID, allele2), Type.Autosomal.AlleleID(geneID, allele3));
-        }
-
-        public bool HasAutosomal(string gene, string allele1, string allele2, string allele3, string allele4) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            return HasAutosomal(geneID, Type.Autosomal.AlleleID(geneID, allele1), Type.Autosomal.AlleleID(geneID, allele2), Type.Autosomal.AlleleID(geneID, allele3), Type.Autosomal.AlleleID(geneID, allele4));
-        }
-
-        public bool Homozygous(string gene, string allele) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            return Homozygous(geneID, Type.Autosomal.AlleleID(geneID, allele));
-        }
-
-        public bool HasXZ(string gene, string allele) {
-            int geneID = Type.XZ.GeneID(gene);
-            return HasXZ(geneID, Type.XZ.AlleleID(geneID, allele));
-        }
-
-        public bool HomozygousXZ(string gene, string allele) {
-            int geneID = Type.XZ.GeneID(gene);
-            return HomozygousXZ(geneID, Type.XZ.AlleleID(geneID, allele));
-        }
-
-        public void SetAutosomal(string gene, int n, string allele) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
-            Autosomal(geneID, n, alleleID);
-        }
-
-        public void SetHomozygous(string gene, string allele) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
-            Autosomal(geneID, 0, alleleID);
-            Autosomal(geneID, 1, alleleID);
-        }
-
-        public void SetNotHomozygous(string gene, string avoidAllele, AlleleFrequencies frequencies, string fallbackAllele) {
-            int geneID = Type.Autosomal.GeneID(gene);
-            byte avoidID = Type.Autosomal.AlleleID(geneID, avoidAllele);
-            if (Homozygous(geneID, avoidID)) {
-                float[] f = frequencies.Autosomal[geneID];
-                for (int i = 0; i < f.Length; ++i) {
-                    if (i == avoidID) {
-                        continue;
-                    }
-                    if (f[i] > 0) {
-                        Autosomal(geneID, 0, (byte) i);
-                        break;
-                    }
-                }
-                if (Homozygous(geneID, avoidID)) {
-                    Autosomal(geneID, 0, Type.Autosomal.AlleleID(geneID, fallbackAllele));
-                }
-            }
-        }
-
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
-
             this.Type = type;
 
             byte[] autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArrayAttribute)?.value;
