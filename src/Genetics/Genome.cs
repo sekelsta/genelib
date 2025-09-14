@@ -289,39 +289,41 @@ namespace Genelib {
             }
             Genome gamete = new Genome(Type, Ploidy / 2);
 
-            gamete.Autosomal = SplitGenes(gamete.Autosomal, Autosomal, random);
-            gamete.Anonymous = SplitGenes(gamete.Anonymous, Anonymous, random);
+            SplitGenes(gamete.Autosomal, Autosomal, random);
+            SplitGenes(gamete.Anonymous, Anonymous, random);
 
             for (int p = 0; p < gamete.Ploidy; ++p) {
                 for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
                     int n = random.Next(2);
                     int gIndex = gamete.Ploidy * gene + p;
                     int pIndex = Ploidy * gene + 2 * p + n;
-                    gamete.Bitwise[gIndex / 8] |= ((Bitwise[pIndex / 8] >> (pIndex % 8)) & 1) << (gIndex % 8);
+                    gamete.Bitwise[gIndex / 8] |= (byte)(((Bitwise[pIndex / 8] >> (pIndex % 8)) & 1) << (gIndex % 8));
                 }
             }
 
             if (this.IsHeterogametic()) {
                 if (heterogametic) {
-                    gamete.YW = this.YW;
+                    gamete.XZ = new byte[Type.XZ.GeneCount, 0];
+                    gamete.YW = this.YW.Clone();
                 }
                 else {
-                    gamete.XZ = this.XZ;
+                    gamete.XZ = this.XZ.Clone();
                 }
             }
             else {
                 gamete.XZ = new byte[Type.XZ.GeneCount, gamete.Ploidy];
-                gamete.XZ = SplitGenes(XZ, random);
+                SplitGenes(gamete.XZ, XZ, random);
             }
 
             return gamete;
         }
 
-        protected static byte[,] SplitGenes(byte[,] gamete, byte[,] parent, Random random) {
+        protected static void SplitGenes(byte[,] gamete, byte[,] parent, Random random) {
             for (int p = 0; p < gamete.GetLength(1); ++p) {
                 int n = random.NextInt(2);
                 for (int gene = 0; gene < parent.GetLength(0); ++gene) {
-
+                    gamete[gene, p] = parent[gene, 2 * p + n];
+                    // TODO: Genetic linkage
                     n = random.NextInt(2);
                 }
             }
@@ -329,105 +331,42 @@ namespace Genelib {
 
         public virtual Genome Join(Genome other) {
             Genome zygote = new Genome(Type, this.Ploidy + other.Ploidy);
+            JoinGenes(zygote.Autosomal, this.Autosomal, other.Autosomal);
+            JoinGenes(zygote.Anonymous, this.Anonymous, other.Anonymous);
+
+            for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
+                for (int p = 0; p < this.Bitwise.GetLength(1); ++p) {
+                    int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
+                    int gIndex = gene * this.Bitwise.GetLength(1) + p;
+                    zygote.Bitwise[zIndex/8] |= ((this.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8);
+                }
+                for (int p = 0; p < other.Bitwise.GetLength(1); ++p) {
+                    int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
+                    int gIndex = gene * other.Bitwise.GetLength(1) + this.Bitwise.GetLength(1) + p;
+                    zygote.Bitwise[zIndex/8] |= ((other.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8);
+                }
+            }
+
+            JoinGenes(zygote.XZ, this.XZ, other.XZ);
             zygote.YW = this.YW ?? other.YW;
-            // TODO: Join logic
+            return zygote;
+        }
+
+        protected static void JoinGenes(byte[,] joined, byte[,] first, byte[,] second) {
+            for (int gene = 0; gene < parent.GetLength(0); ++gene) {
+                for (int p = 0; p < first.GetLength(1); ++p) {
+                    gamete[gene, p] = first[gene, p];
+                }
+                for (int p = 0; p < second.GetLength(1); ++p) {
+                    gamete[gene, first.GetLength(1) + p] = second[gene, p];
+                }
+            }
         }
 
         public static Genome Inherit(Genome mother, Genome father, bool isHeterogametic, Random random) {
             return mother.CreateGamete(isHeterogametic, random).Join(father.CreateGamete(isHeterogametic, random));
         }
-/*
-        private byte[] atLeastSize(byte[] given, int size) {
-            if (given != null && given.Length >= size) {
-                return given;
-            }
-            byte[] array = new byte[size];
-            if (given == null) {
-                return array;
-            }
-            Array.Copy(given, array, given.Length);
-            return array;
-        }
 
-        protected virtual Genome Inherit(Genome mother, Genome father, bool isHeterogametic, Random random) {
-            if (father.secondary_xz == null) {
-                // Mammal
-                primary_xz = inherit_xz(mother.primary_xz, mother.secondary_xz, random);
-                if (isHeterogametic) {
-                    yw = (byte[]) father.yw.Clone();
-                }
-                else {
-                    secondary_xz = (byte[]) father.primary_xz.Clone();
-                }
-            }
-            else {
-                // Bird
-                primary_xz = inherit_xz(father.primary_xz, father.secondary_xz, random);
-                if (isHeterogametic) {
-                    yw = (byte[]) mother.yw.Clone();
-                }
-                else {
-                    secondary_xz = (byte[]) mother.primary_xz.Clone();
-                }
-            }
-            autosomal = inherit_autosomal(mother.autosomal, father.autosomal, random);
-            anonymous = inherit_autosomal(mother.anonymous, father.anonymous, random);
-            bitwise = inherit_bitwise(mother.bitwise, father.bitwise, random);
-            return this;
-        }
-
-        protected virtual byte[] inherit_autosomal(byte[] maternal, byte[] paternal, Random random) {
-            if (maternal == null && paternal == null) {
-                return null;
-            }
-            if (maternal == null || paternal == null) {
-                throw new ArgumentException("Parent autosomal gene arrays should either both be null or both be non-null");
-            }
-            // If lengths do not match, assume the world used to use a newer version of the mod but now uses an older version
-            int length = Math.Min(maternal.Length / maternal.Ploidy, paternal.Length / paternal.Ploidy);
-            byte[] result = new byte[length];
-            for (int i = 0; i < length; ++i) {
-                result[Ploidy * i] = random.NextBool() ? maternal[maternal.Ploidy * i] : maternal[maternal.Ploidy * i + 1];
-                result[Ploidy * i + 1] = random.NextBool() ? paternal[paternal.Ploidy * i] : paternal[paternal.Ploidy * i + 1];
-            }
-            return result;
-        }
-
-        protected virtual byte[] inherit_bitwise(byte[] maternal, byte[] paternal, Random random) {
-            if (maternal == null && paternal == null) {
-                return null;
-            }
-            if (maternal == null || paternal == null) {
-                throw new ArgumentException("Parent bitwise gene arrays should either both be null or both be non-null");
-            }
-            // If lengths do not match, assume the world used to use a newer version of the mod but now uses an older version
-            int length = Math.Min(maternal.Length, paternal.Length);
-            byte[] result = new byte[length];
-            for (int i = 0; i < length; ++i) {
-                for (int b = 3; b >= 0; --b) {
-                    byte m = (byte)(maternal[i] >> (byte)(2 * b + random.Next(2)));
-                    byte p = (byte)(paternal[i] >> (2 * b + random.Next(2)));
-                    result[i] |= (byte)((((m & 1) << 1) | (p & 1)) << 2 * b);
-                }
-            }
-            return result;
-        }
-
-        protected virtual byte[] inherit_xz(byte[] maternal, byte[] paternal, Random random) {
-            if (maternal == null && paternal == null) {
-                return null;
-            }
-            if (maternal == null || paternal == null) {
-                throw new ArgumentException("Parent xz gene arrays should either both be null or both be non-null");
-            }
-            int length = Math.Min(maternal.Length, paternal.Length);
-            byte[] result = new byte[length];
-            for (int i = 0; i < length; ++i) {
-                result[i] = random.NextBool() ? maternal[i] : paternal[i];
-            }
-            return result;
-        }
-*/
         public virtual Genome Mutate(double p, Random random) {
             for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
                 for (int n = 0; n < Ploidy; ++n) {
@@ -476,6 +415,18 @@ namespace Genelib {
             return this;
         }
 
+        private byte[] atLeastSize(byte[] given, int size) {
+            if (given != null && given.Length >= size) {
+                return given;
+            }
+            byte[] array = new byte[size];
+            if (given == null) {
+                return array;
+            }
+            Array.Copy(given, array, given.Length);
+            return array;
+        }
+
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
             this.Type = type;
 
@@ -495,52 +446,45 @@ namespace Genelib {
 
         // Caller is responsible for marking the path as dirty if necessary
         public void AddToTree(TreeAttribute geneticsTree) {
-            if (autosomal == null) {
+            if (Autosomal.Length == 0) {
                 geneticsTree.RemoveAttribute("autosomal");
             }
             else {
-                geneticsTree.SetAttribute("autosomal", new ByteArrayAttribute(autosomal));
+                geneticsTree.SetAttribute("autosomal", new ByteArrayAttribute(Autosomal));
             }
-            if (anonymous == null) {
+            if (Anonymous.Length == 0) {
                 geneticsTree.RemoveAttribute("anonymous");
             }
             else {
-                geneticsTree.SetAttribute("anonymous", new ByteArrayAttribute(anonymous));
+                geneticsTree.SetAttribute("anonymous", new ByteArrayAttribute(Anonymous));
             }
-            if (bitwise == null) {
+            if (Bitwise.Length == 0) {
                 geneticsTree.RemoveAttribute("bitwise");
             }
             else {
-                geneticsTree.SetAttribute("bitwise", new ByteArrayAttribute(bitwise));
+                geneticsTree.SetAttribute("bitwise", new ByteArrayAttribute(Bitwise));
             }
-            if (primary_xz == null) {
-                geneticsTree.RemoveAttribute("primary_xz");
-            }
-            else {
-                geneticsTree.SetAttribute("primary_xz", new ByteArrayAttribute(primary_xz));
-            }
-            if (secondary_xz == null) {
-                geneticsTree.RemoveAttribute("secondary_xz");
+            if (XZ.Length == 0) {
+                geneticsTree.RemoveAttribute("xz");
             }
             else {
-                geneticsTree.SetAttribute("secondary_xz", new ByteArrayAttribute(secondary_xz));
+                geneticsTree.SetAttribute("xz", new ByteArrayAttribute(XZ));
             }
-            if (yw == null) {
+            if (YW == null) {
                 geneticsTree.RemoveAttribute("yw");
             }
             else {
-                geneticsTree.SetAttribute("yw", new ByteArrayAttribute(yw));
+                geneticsTree.SetAttribute("yw", new ByteArrayAttribute(YW));
             }
         }
 
         public override string ToString() {
             return "Genome << type:" + Type.Name 
-                + ",\n    autosomal=" + autosomal.ArrayToString() 
-                + ",\n    primary_xz=" + primary_xz.ArrayToString() 
-                + ",\n    secondary_xz=" + secondary_xz.ArrayToString() 
-                + ",\n    yw=" + yw.ArrayToString() 
-                + ",\n    anonymous=" + anonymous.ArrayToString()
-                + ",\n    bitwise=" + bitwise.ArrayToString() + " >>";
+                + ",\n    autosomal=" + Autosomal.ArrayToString() 
+                + ",\n    xz=" + XZ.ArrayToString() 
+                + ",\n    yw=" + YW?.ArrayToString() 
+                + ",\n    anonymous=" + Anonymous.ArrayToString()
+                + ",\n    bitwise=" + Bitwise.ArrayToString() + " >>";
         }
     }
 }

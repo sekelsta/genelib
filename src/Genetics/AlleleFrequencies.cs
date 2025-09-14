@@ -39,7 +39,10 @@ namespace Genelib {
                     int groupSize = type.Bitwise.GroupSize(geneGroup);
                     int ordinal = type.Bitwise.GroupOrdinal(geneGroup);
                     if (jp.Value.Type == JTokenType.Array) {
-                        float[] values = jp.Value.ToObject<float[]>();
+                        float[]? values = jp.Value.ToObject<float[]>();
+                        if (values == null) {
+                            throw new Exception("Improper format of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
+                        }
                         if (values.Length != groupSize) {
                             throw new Exception("Incorrect number of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
                         }

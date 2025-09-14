@@ -14,6 +14,8 @@ using Vintagestory.GameContent;
 
 using Genelib.Extensions;
 
+#nullable disable
+
 namespace Genelib {
     public class GeneticMultiply : EntityBehaviorMultiply {
         public const string Code = "genelib.multiply";
