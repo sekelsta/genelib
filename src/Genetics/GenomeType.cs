@@ -143,7 +143,7 @@ namespace Genelib {
             return initializers[name];
         }
 
-        public GeneInitializer ChooseInitializer(string[] initializerNames, ClimateCondition climate, int y, Random random) {
+        public GeneInitializer? ChooseInitializer(string[] initializerNames, ClimateCondition climate, int y, Random random) {
             List<GeneInitializer> valid = new List<GeneInitializer>();
             // If no list provided, default to all being valid
             if (initializerNames == null) {
