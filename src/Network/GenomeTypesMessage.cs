@@ -7,8 +7,8 @@ using Vintagestory.API.Common;
 namespace Genelib.Network {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class GenomeTypesMessage {
-        public string[] AssetLocations;
-        public GenomeType[] GenomeTypes;
+        public required string[] AssetLocations;
+        public required GenomeType[] GenomeTypes;
 
         public GenomeTypesMessage() {}
 
