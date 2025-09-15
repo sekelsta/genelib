@@ -17,7 +17,7 @@ namespace Genelib {
         // Called on first spawn after genome is generated, but before it is set. Intended to modify the genome so
         // that the genes are suitable for a wild-spawned adult, such as by ensuring lethal alleles are not homozygous.
         // Not called when the genome was created by reproduction
-        void Finalize(Genome genome, AlleleFrequencies frequencies, Random random) {
+        void FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
             // Do nothing
         }
 

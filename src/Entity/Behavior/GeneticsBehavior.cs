@@ -78,7 +78,7 @@ namespace Genelib {
                         }
                     }
                     foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
-                        interpreter.Finalize(Genome, frequencies, random);
+                        interpreter.FinalizeSpawn(Genome, frequencies, random);
                     }
                 }
             }

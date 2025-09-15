@@ -1,7 +1,7 @@
 using Genelib.Extensions;
 using System;
-using System.Linq;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Vintagestory.API.Datastructures;
 
 #nullable disable
@@ -72,6 +72,7 @@ namespace Genelib {
         // Checks if any allele matches any of the given alleles, for a gene on the Y or W chromosome
         [MemberNotNull(nameof(YW))]
         public bool HasHeterogametic(int gene, params byte[] alleles) {
+            ArgumentNullException.ThrowIfNull(YW);
             bool result = false;
             for (int n = 0; n < YW.GetLength(1); ++n) {
                 foreach (byte a in alleles) {
@@ -84,6 +85,7 @@ namespace Genelib {
         // Checks if every allele matches at least one of the given alleles, for a gene on the Y or W chromosome
         [MemberNotNull(nameof(YW))]
         public bool HasOnlyHeterogametic(int gene, params byte[] alleles) {
+            ArgumentNullException.ThrowIfNull(YW);
             bool result = false;
             for (int n = 0; n < YW.GetLength(1); ++n) {
                 bool matches = false;
@@ -100,7 +102,7 @@ namespace Genelib {
         }
 
         public bool IsHeterogametic() {
-            return !IsHomogametic();
+            return YW is not null;
         }
 
         public int BitwiseSum(Range range) {
@@ -253,8 +255,14 @@ namespace Genelib {
             }
 
             if (heterogametic) {
-                YW = new byte[Ploidy/2, Type.YW.GeneCount];
                 XZ = new byte[Ploidy/2, Type.XZ.GeneCount];
+                YW = new byte[Ploidy/2, Type.YW.GeneCount];
+
+                for (int gene = 0; gene < frequencies.YW.Length; ++gene) {
+                    for (int n = 0; n < YW.GetLength(1); ++n) {
+                        YW[n, gene] = getRandomAllele(frequencies.YW[gene], random);
+                    }
+                }
             }
             else {
                 XZ = new byte[Ploidy, Type.XZ.GeneCount];
@@ -263,12 +271,6 @@ namespace Genelib {
             for (int gene = 0; gene < frequencies.XZ.Length; ++gene) {
                 for (int n = 0; n < XZ.GetLength(1); ++n) {
                     XZ[gene, n] = getRandomAllele(frequencies.XZ[gene], random);
-                }
-            }
-
-            for (int gene = 0; gene < frequencies.YW.Length; ++gene) {
-                for (int n = 0; n < YW.GetLength(1); ++n) {
-                    YW[n, gene] = getRandomAllele(frequencies.YW[gene], random);
                 }
             }
         }
@@ -304,10 +306,10 @@ namespace Genelib {
             if (this.IsHeterogametic()) {
                 if (heterogametic) {
                     gamete.XZ = new byte[Type.XZ.GeneCount, 0];
-                    gamete.YW = this.YW.Clone();
+                    gamete.YW = (byte[,])this.YW!.Clone();
                 }
                 else {
-                    gamete.XZ = this.XZ.Clone();
+                    gamete.XZ = (byte[,])this.XZ.Clone();
                 }
             }
             else {
@@ -320,11 +322,11 @@ namespace Genelib {
 
         protected static void SplitGenes(byte[,] gamete, byte[,] parent, Random random) {
             for (int p = 0; p < gamete.GetLength(1); ++p) {
-                int n = random.NextInt(2);
+                int n = random.Next(2);
                 for (int gene = 0; gene < parent.GetLength(0); ++gene) {
                     gamete[gene, p] = parent[gene, 2 * p + n];
                     // TODO: Genetic linkage
-                    n = random.NextInt(2);
+                    n = random.Next(2);
                 }
             }
         }
@@ -338,12 +340,12 @@ namespace Genelib {
                 for (int p = 0; p < this.Bitwise.GetLength(1); ++p) {
                     int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
                     int gIndex = gene * this.Bitwise.GetLength(1) + p;
-                    zygote.Bitwise[zIndex/8] |= ((this.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8);
+                    zygote.Bitwise[zIndex/8] |= (byte)(((this.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8));
                 }
                 for (int p = 0; p < other.Bitwise.GetLength(1); ++p) {
                     int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
                     int gIndex = gene * other.Bitwise.GetLength(1) + this.Bitwise.GetLength(1) + p;
-                    zygote.Bitwise[zIndex/8] |= ((other.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8);
+                    zygote.Bitwise[zIndex/8] |= (byte)(((other.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8));
                 }
             }
 
@@ -353,12 +355,12 @@ namespace Genelib {
         }
 
         protected static void JoinGenes(byte[,] joined, byte[,] first, byte[,] second) {
-            for (int gene = 0; gene < parent.GetLength(0); ++gene) {
+            for (int gene = 0; gene < first.GetLength(0); ++gene) {
                 for (int p = 0; p < first.GetLength(1); ++p) {
-                    gamete[gene, p] = first[gene, p];
+                    joined[gene, p] = first[gene, p];
                 }
                 for (int p = 0; p < second.GetLength(1); ++p) {
-                    gamete[gene, first.GetLength(1) + p] = second[gene, p];
+                    joined[gene, first.GetLength(1) + p] = second[gene, p];
                 }
             }
         }
@@ -427,6 +429,14 @@ namespace Genelib {
             return array;
         }
 
+        protected virtual void UpdateForType() {
+            this.Autosomal = atLeastSize(Autosomal, Ploidy * Type.Autosomal.GeneCount);
+            this.Anonymous = atLeastSize(Anonymous, Ploidy * Type.Anonymous.GeneCount);
+            this.Bitwise = atLeastSize(Bitwise, (int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0));
+            this.XZ = atLeastSize(XZ, (YW == null ? (int)Math.Ceiling(Ploidy/2.0) : Ploidy) * type.XZ.GeneCount);
+            this.YW = atLeastSize(YW, (int)Math.Ceiling(Ploidy/2.0) * Type.YW.GeneCount);
+        }
+
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
             this.Type = type;
 
@@ -436,12 +446,8 @@ namespace Genelib {
             byte[] primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
             byte[] secondary_xz = (geneticsTree.GetAttribute("secondary_xz") as ByteArrayAttribute)?.value;
             byte[] yw = (geneticsTree.GetAttribute("yw") as ByteArrayAttribute)?.value;
-            this.autosomal = atLeastSize(autosomal, 2 * type.Autosomal.GeneCount);
-            this.anonymous = atLeastSize(anonymous, 2 * type.Anonymous.GeneCount);
-            this.bitwise = atLeastSize(bitwise, (int)Math.Ceiling(2 * Type.Bitwise.GeneCount / 8.0));
-            this.primary_xz = atLeastSize(primary_xz, type.XZ.GeneCount);
-            this.secondary_xz = atLeastSize(secondary_xz, type.XZ.GeneCount);
-            this.yw = atLeastSize(yw, type.YW.GeneCount);
+            // TODO: Read these properly
+            UpdateForType();
         }
 
         // Caller is responsible for marking the path as dirty if necessary
