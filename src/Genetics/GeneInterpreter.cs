@@ -17,7 +17,7 @@ namespace Genelib {
         // Called on first spawn after genome is generated, but before it is set. Intended to modify the genome so
         // that the genes are suitable for a wild-spawned adult, such as by ensuring lethal alleles are not homozygous.
         // Not called when the genome was created by reproduction
-        void Finalize(Genome genome, AlleleFrequencies frequencies, Random random) {
+        void FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
             // Do nothing
         }
 
@@ -31,7 +31,7 @@ namespace Genelib {
         // Called on first spawn or when an entity is born, after genome is finalized
         void Interpret(EntityBehaviorGenetics genetics);
 
-        ITexPositionSource GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
+        ITexPositionSource? GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
             return null;
         }
     }

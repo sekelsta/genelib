@@ -47,7 +47,7 @@ namespace Genelib {
         }
 
         private bool isRot(ItemStack stack) {
-            AssetLocation code = stack.Collectible?.Code;
+            AssetLocation? code = stack.Collectible?.Code;
             return code != null && code.Domain == "game" && code.Path == "rot";
         }
 
@@ -67,7 +67,7 @@ namespace Genelib {
 
             decayHours = Block.Attributes?["decayHours"]?.AsDouble(0) ?? 0;
 
-            (container as ConstantPerishRateContainer).PerishRate = Block.Attributes?["perishRate"]?.AsFloat(1) ?? 1;
+            ((ConstantPerishRateContainer)container).PerishRate = Block.Attributes?["perishRate"]?.AsFloat(1) ?? 1;
             if (LastUpdateHours == -1) {
                 LastUpdateHours = Api.World.Calendar.TotalHours;
             }
@@ -113,7 +113,7 @@ namespace Genelib {
                 if (chickData == null) {
                     continue;
                 }
-                string chickCode = chickData.GetString("code");
+                string? chickCode = chickData.GetString("code");
                 if (chickCode == null || chickCode == "") {
                     continue;
                 }
@@ -128,7 +128,7 @@ namespace Genelib {
                         if (spawnType == null) {
                             throw new Exception(Block.Code.ToString() + " attempted to incubate egg containing entity with code " + chickCode.ToString() + ", but no such entity was found.");
                         }
-                        GenomeType genomeType = spawnType.GetGenomeType();
+                        GenomeType? genomeType = spawnType.GetGenomeType();
                         if (genomeType != null) {
                             Genome childGenome = new Genome(genomeType, chickData);
                             if (childGenome.IsEmbryonicLethal()) {

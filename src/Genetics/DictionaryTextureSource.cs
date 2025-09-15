@@ -5,8 +5,8 @@ using Vintagestory.Client.NoObf;
 
 namespace Genelib {
     public class DictionaryTextureSource : ITexPositionSource {
-        public MiniDictionary Mapping;
-        public ITextureAtlasAPI Atlas;
+        public required MiniDictionary Mapping;
+        public required ITextureAtlasAPI Atlas;
 
         public TextureAtlasPosition this[string textureCode] {
             get => Atlas.Positions[Mapping[textureCode]];
