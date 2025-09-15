@@ -29,20 +29,20 @@ namespace Genelib {
         }
 
         public static bool ToggleAnimalInfoGUI(KeyCombination keyConbination) {
-            foreach (GuiDialog dialog in GenelibSystem.ClientAPI.Gui.OpenedGuis) {
+            foreach (GuiDialog dialog in GenelibSystem.ClientAPI!.Gui.OpenedGuis) {
                 if (dialog is GuiDialogAnimal && dialog.IsOpened()) {
                     dialog.TryClose();
                     return true;
                 }
             }
 
-            EntityPlayer player = (GenelibSystem.ClientAPI.World as ClientMain)?.EntityPlayer;
-            EntitySelection entitySelection = player?.EntitySelection;
-            EntityAgent agent = entitySelection?.Entity as EntityAgent;
+            EntityPlayer? player = (GenelibSystem.ClientAPI.World as ClientMain)?.EntityPlayer;
+            EntitySelection? entitySelection = player?.EntitySelection;
+            EntityAgent? agent = entitySelection?.Entity as EntityAgent;
             if (agent == null 
                     || !agent.Alive 
                     || agent.GetBehavior<BehaviorAnimalInfo>() == null 
-                    || agent.Pos.SquareDistanceTo(player.Pos.XYZ) > 20 * 20) {
+                    || agent.Pos.SquareDistanceTo(player!.Pos.XYZ) > 20 * 20) {
                 return false;
             }
             GuiDialogAnimal animalDialog = new GuiDialogAnimal(GenelibSystem.ClientAPI, agent);
@@ -51,8 +51,8 @@ namespace Genelib {
         }
 
         public static void OnSetNameMessageServer(IServerPlayer fromPlayer, SetNameMessage message) {
-            Entity target = GenelibSystem.ServerAPI.World.GetEntityById(message.entityId);
-            EntityBehaviorNameTag nametag = target.GetBehavior<EntityBehaviorNameTag>();
+            Entity target = GenelibSystem.ServerAPI!.World.GetEntityById(message.entityId);
+            EntityBehaviorNameTag? nametag = target.GetBehavior<EntityBehaviorNameTag>();
             if (nametag == null || target.OwnedByOther(fromPlayer)) {
                 return;
             }
@@ -62,8 +62,8 @@ namespace Genelib {
         }
 
         public static void OnSetNoteMessageServer(IServerPlayer fromPlayer, SetNoteMessage message) {
-            Entity target = GenelibSystem.ServerAPI.World.GetEntityById(message.entityId);
-            BehaviorAnimalInfo info = target.GetBehavior<BehaviorAnimalInfo>();
+            Entity target = GenelibSystem.ServerAPI!.World.GetEntityById(message.entityId);
+            BehaviorAnimalInfo? info = target.GetBehavior<BehaviorAnimalInfo>();
             if (info == null || target.OwnedByOther(fromPlayer)) {
                 return;
             }
@@ -73,7 +73,7 @@ namespace Genelib {
         }
 
         public static void OnToggleBreedingMessageServer(IServerPlayer fromPlayer, ToggleBreedingMessage message) {
-            Entity target = GenelibSystem.ServerAPI.World.GetEntityById(message.entityId);
+            Entity target = GenelibSystem.ServerAPI!.World.GetEntityById(message.entityId);
             if (target.OwnedByOther(fromPlayer)) {
                 return;
             }

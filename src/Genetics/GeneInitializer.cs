@@ -8,9 +8,9 @@ namespace Genelib {
     public class GeneInitializer {
         public readonly string Name;
         private GenomeType type;
-        private JsonObject attributes;
-        private AlleleFrequencies frequencies;
-        private ClimateSpawnCondition climateCondition;
+        private JsonObject? attributes;
+        private AlleleFrequencies? frequencies;
+        private ClimateSpawnCondition? climateCondition;
         private float minGeo;
         private float maxGeo = 1;
         private float minFertility;
@@ -20,7 +20,7 @@ namespace Genelib {
         public AlleleFrequencies Frequencies {
             get {
                 if (frequencies == null) {
-                    frequencies = new AlleleFrequencies(type, attributes);
+                    frequencies = new AlleleFrequencies(type, attributes!);
                     attributes = null;
                 }
                 return frequencies;
@@ -60,8 +60,8 @@ namespace Genelib {
                     || climateCondition.MinForestOrShrubs <= climate.ShrubDensity)
                 && (maxForestOrShrubs >= climate.ForestDensity 
                     || maxForestOrShrubs >= climate.ShrubDensity);
-            int sealevel = GenelibSystem.ServerAPI.World.SeaLevel;
-            int maxheight = GenelibSystem.ServerAPI.WorldManager.MapSizeY;
+            int sealevel = GenelibSystem.ServerAPI!.World.SeaLevel;
+            int maxheight = GenelibSystem.ServerAPI!.WorldManager.MapSizeY;
             float highY = (y + 3f) > sealevel ? (y + 3f - sealevel) / (maxheight - sealevel) : (y + 3f) / sealevel;
             float lowY = (y - 3f) > sealevel ? (y - 3f - sealevel) / (maxheight - sealevel) : (y - 3f) / sealevel;
             return forestOrShrubs

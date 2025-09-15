@@ -13,8 +13,6 @@ using Vintagestory.GameContent;
 
 using Genelib.Extensions;
 
-#nullable disable
-
 namespace Genelib {
     public class GeneticMultiply : EntityBehaviorMultiply {
         public const string Code = "genelib.multiply";
@@ -43,7 +41,6 @@ namespace Genelib {
 
         public bool pregnancyDaysSpecified = false;
         public double PregnancyDays;
-        public string RequiresNearbyEntityCode;
         public float RequiresNearbyEntityRange;
 
         protected AssetLocation[] SireCodes;
@@ -62,7 +59,7 @@ namespace Genelib {
         protected double BreedingSeasonAfter;
 
         protected TreeArrayAttribute Litter {
-            get => multiplyTree["litter"] as TreeArrayAttribute;
+            get => (multiplyTree["litter"] as TreeArrayAttribute)!;
             set { 
                 multiplyTree["litter"] = value;
                 entity.WatchedAttributes.MarkPathDirty("multiply");
@@ -85,7 +82,10 @@ namespace Genelib {
             }
         }
 
-        public GeneticMultiply(Entity entity) : base(entity) { }
+        public GeneticMultiply(Entity entity) : base(entity) {
+            SpawnEntityCodes = null!;
+            SireCodes = null!;
+        }
 
         public void SetNotPregnant() {
             IsPregnant = false;
@@ -97,7 +97,7 @@ namespace Genelib {
         protected override void CheckMultiply(float dt)
         {
             // Deliberately skip call to base.CheckMultiply
-            FieldInfo callbackField = typeof(EntityBehaviorMultiply).GetField("callbackId", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo callbackField = typeof(EntityBehaviorMultiply).GetField("callbackId", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
             if (!entity.Alive) {
                 callbackField.SetValue(this, 0);
@@ -117,7 +117,7 @@ namespace Genelib {
 
             if (InEarlyPregnancy) {
                 if (entity.World.Calendar.TotalDays > TotalDaysPregnancyStart + PregnancyDays * ViabilityCheckDelay) {
-                    EntityBehaviorGenetics gb = entity.GetBehavior<EntityBehaviorGenetics>();
+                    EntityBehaviorGenetics? gb = entity.GetBehavior<EntityBehaviorGenetics>();
                     if (gb != null) {
                         List<TreeAttribute> surviving = new List<TreeAttribute>();
                         foreach (TreeAttribute childTree in Litter.value) {
@@ -167,12 +167,12 @@ namespace Genelib {
                 return false;
             }
 
-            Entity sire = GetRequiredEntityNearby();
+            Entity? sire = GetRequiredEntityNearby();
             if (sire == null && SireCodes.Length > 0) return false;
             // If no required nearby entity code, then self-fertilize
             sire ??= entity;
 
-            EntityBehaviorTaskAI taskAi = entity.GetBehavior<EntityBehaviorTaskAI>();
+            EntityBehaviorTaskAI? taskAi = entity.GetBehavior<EntityBehaviorTaskAI>();
             if (taskAi == null) {
                 MateWith(sire);
                 return true;
@@ -182,7 +182,7 @@ namespace Genelib {
                 return false;
             }
 
-            EntityBehaviorTaskAI sireTaskAi = sire.GetBehavior<EntityBehaviorTaskAI>();
+            EntityBehaviorTaskAI? sireTaskAi = sire.GetBehavior<EntityBehaviorTaskAI>();
             if (sireTaskAi == null) {
                 MateWith(sire);
                 return true;
@@ -218,7 +218,7 @@ namespace Genelib {
         }
 
         // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
-        protected override Entity GetRequiredEntityNearby() {
+        protected override Entity? GetRequiredEntityNearby() {
             if (SireCodes.Length == 0) {
                 return null;
             }
@@ -247,7 +247,7 @@ namespace Genelib {
             return ChooseAvoidingCloseRelatives(entity, entities);
         }
 
-        public static Entity ChooseAvoidingCloseRelatives(Entity entity, Entity[] entities) {
+        public static Entity? ChooseAvoidingCloseRelatives(Entity entity, Entity[] entities) {
             if (entities == null || entities.Length == 0) {
                 return null;
             }
@@ -313,12 +313,11 @@ namespace Genelib {
                 }
             }
 
-            Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
-            Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            Genome? sireGenome = sire?.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            Genome? ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             int litterSize = ChooseLitterSize();
 
             List<TreeAttribute> litter = new List<TreeAttribute>();
-            List<string> genesDebug = new List<string>();
             for (int i = 0; i < litterSize; ++i) {
                 TreeAttribute offspring = new TreeAttribute();
                 if (entity.World.Rand.NextSingle() < MiscarriageChance) {
@@ -328,33 +327,33 @@ namespace Genelib {
                 AssetLocation offspringCode = SpawnEntityCodes[entity.World.Rand.Next(SpawnEntityCodes.Length)];
                 if (ourGenome != null && sireGenome != null) {
                     bool heterogametic = ourGenome.Type.SexDetermination.Heterogametic(entity.IsMale());
-                    Genome child = new Genome(ourGenome, sireGenome, heterogametic, entity.World.Rand);
+                    Genome child = Genome.Inherit(ourGenome, sireGenome, heterogametic, entity.World.Rand);
                     child.Mutate(GenelibConfig.MutationRate, entity.World.Rand);
                     TreeAttribute childGeneticsTree = (TreeAttribute) offspring.GetOrAddTreeAttribute("genetics");
-                    if (ViabilityCheckDelay == 0 && child.EmbryonicLethal()) {
+                    if (ViabilityCheckDelay == 0 && child.IsEmbryonicLethal()) {
                         continue;
                     }
                     child.AddToTree(childGeneticsTree);
-                    genesDebug.Add(child.anonymous.ArrayToString());
                 }
                 offspring.SetString("code", offspringCode.ToString());
 
                 offspring.SetLong("motherId", entity.UniqueID());
-                string motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+                string? motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
                 if (motherName != null && motherName != "") {
                     offspring.SetString("motherName", motherName);
                 }
                 offspring.SetString("motherKey", entity.Code.Domain + ":item-creature-" + entity.Code.Path);
 
-                offspring.SetLong("fatherId", sire.UniqueID());
-                string fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
-                if (fatherName != null && fatherName != "") {
-                    offspring.SetString("fatherName", fatherName);
+                if (sire != null) {
+                    offspring.SetLong("fatherId", sire.UniqueID());
+                    string? fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+                    if (fatherName != null && fatherName != "") {
+                        offspring.SetString("fatherName", fatherName);
+                    }
+                    offspring.SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
                 }
-                offspring.SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
                 litter.Add(offspring);
             }
-            string offspringGenes = genesDebug.Count == 0 ? "" : "\n    pgenes=" + String.Join("\n    pgenes=", genesDebug);
 
             if (litter.Count == 0) {
                 if (litterSize > 0 && MiscarriageCooldown > 0) {
@@ -379,9 +378,14 @@ namespace Genelib {
 
         protected override void GiveBirth(float q) {
             int nextGeneration = entity.WatchedAttributes.GetInt("generation", 0) + 1;
-            TreeAttribute[] litterData = Litter?.value;
-            foreach (TreeAttribute childData in litterData) {
-                Entity spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
+            TreeAttribute[]? litterData = Litter?.value;
+            if (litterData == null) {
+                entity.Api.Logger.Warning("Entity " + entity.Code + " gave birth but with null litter data, so 0 offspring were produced.");
+            }
+            else {
+                foreach (TreeAttribute childData in litterData) {
+                    Entity spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
+                }
             }
             SetNotPregnant();
             TotalDaysLastBirth = entity.World.Calendar.TotalDays;
@@ -423,7 +427,7 @@ namespace Genelib {
             return false;
         }
 
-        public virtual ItemStack LayEgg() {
+        public virtual ItemStack? LayEgg() {
             // Not implemented
             return null;
         }
@@ -513,7 +517,6 @@ namespace Genelib {
 
             RequiresNearbyEntityRange = attributes["requiresNearbyEntityRange"].AsFloat(16);
 
-            RequiresNearbyEntityCode = null;
             string[] sireStrings;
             if (attributes.KeyExists("sireCodes")) {
                 sireStrings = attributes["sireCodes"].AsArray<string>();

@@ -12,7 +12,7 @@ namespace Genelib {
     }
 
     public static class SexDeterminationExtensions {
-        private static Dictionary<string, SexDetermination> names;
+        private static Dictionary<string, SexDetermination>? names;
 
         public static bool Heterogametic(this SexDetermination d, bool male) {
             return (male && (d == SexDetermination.XY || d == SexDetermination.XO || d == SexDetermination.ReverseHaplodiploid))

@@ -78,7 +78,7 @@ namespace Genelib {
                         }
                     }
                     foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
-                        interpreter.Finalize(Genome, frequencies, random);
+                        interpreter.FinalizeSpawn(Genome, frequencies, random);
                     }
                 }
             }
@@ -96,7 +96,7 @@ namespace Genelib {
             entity.WatchedAttributes.MarkPathDirty("genetics");
         }
 
-        public override ITexPositionSource GetTextureSource(ref EnumHandling handling) {
+        public override ITexPositionSource? GetTextureSource(ref EnumHandling handling) {
             ITexPositionSource? source = null;
             foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
                 source = interpreter.GetTextureSource(this, ref handling);

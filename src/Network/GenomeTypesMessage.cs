@@ -1,6 +1,7 @@
 using Genelib;
 using ProtoBuf;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using Vintagestory.API.Common;
 
@@ -12,6 +13,7 @@ namespace Genelib.Network {
 
         public GenomeTypesMessage() {}
 
+        [SetsRequiredMembers]
         public GenomeTypesMessage(Dictionary<AssetLocation, GenomeType> types) {
             AssetLocations = new string[types.Count];
             GenomeTypes = new GenomeType[types.Count];

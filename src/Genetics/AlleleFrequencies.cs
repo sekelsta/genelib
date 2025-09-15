@@ -62,11 +62,11 @@ namespace Genelib {
             foreach (JProperty jp in ((JObject) genesObject.Token).Properties()) {
                 string geneName = jp.Name;
                 int geneID = mappings.GeneID(geneName);
-                string defaultAlleleName = null;
+                string? defaultAlleleName = null;
                 JObject jsonFrequencies = (JObject) jp.Value;
                 List<float> list = new List<float>();
                 if (jsonFrequencies.ContainsKey("default")) {
-                    object o = ((JValue) jsonFrequencies.GetValue("default")).Value;
+                    object? o = ((JValue)(jsonFrequencies.GetValue("default")!)).Value;
                     if (o is string) {
                         defaultAlleleName = (string) o;
                     }

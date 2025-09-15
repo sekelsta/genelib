@@ -2,24 +2,22 @@ using System;
 using Genelib.Extensions;
 using Vintagestory.API.Common.Entities;
 
-#nullable enable
-
 namespace Genelib {
     public class PolygeneInterpreter : GeneInterpreter {
         public string Name => "Polygenes";
 
-        void GeneInterpreter.Finalize(Genome genome, AlleleFrequencies frequencies, Random random) {
+        void GeneInterpreter.FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
             Range range = genome.Type.Anonymous.TryGetRange("deleterious");
 
-            for (int i = 2 * range.Start.Value; i < 2 * range.End.Value; ++i) {
-                if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
-                    genome.anonymous[i] = 0;
+            for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
+                bool homozygous = true;
+                for (int n = 0; n < genome.Ploidy; ++n) {
+                    if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
+                        genome.Anonymous[gene, n] = 0;
+                    }
+                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
                 }
-            }
-            for (int i = range.Start.Value; i < range.End.Value; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
-                    genome.anonymous[2 * i] = 0;
-                }
+                if (homozygous) genome.Anonymous[gene, 0] = 0;
             }
         }
 
@@ -28,9 +26,11 @@ namespace Genelib {
 
             int duplicates = 0;
             for (int i = range.Start.Value; i < range.End.Value; ++i) {
-                if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1] && genome.anonymous[2 * i] != 0) {
-                    duplicates += 1;
+                bool homozygous = true;
+                for (int n = 0; n < genome.Ploidy; ++n) {
+                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
                 }
+                if (homozygous) duplicates += 1;
             }
             return duplicates;
         }
@@ -48,7 +48,7 @@ namespace Genelib {
             if (numGenes > 0) {
                 int repeats = 0;
                 for (int i = 0; i < numGenes; ++i) {
-                    if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) {
+                    if (genome.anonymous[2 * i] == genome.anonymous[2 * i + 1]) { // TODO: Update to use the bitwise genes
                         repeats += 1;
                     }
                 }
