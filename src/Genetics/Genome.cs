@@ -140,6 +140,21 @@ namespace Genelib {
             return total;
         }
 
+        public int BitwiseHomozygotes(Range range) {
+            int total = 0;
+            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+                bool match = true;
+                int a = (Bitwise[Ploidy * g / 8] >> (Ploidy * g % 8)) & 1;
+                for (int i = 0; i < Ploidy; ++i) {
+                    int index = (Ploidy * g + i) / 8;
+                    int offset = (Ploidy * g + i) % 8;
+                    match = match && ((Bitwise[index] >> offset) & 1) == a;
+                }
+                if (match) total += 1;
+            }
+            return total;
+        }
+
         public bool HasAllele(string gene, params string[] alleles) {
             int geneID = Type.Autosomal.GeneID(gene);
             return HasAllele(geneID, alleles.Select(allele => Type.Autosomal.AlleleID(geneID, allele)).ToArray());
