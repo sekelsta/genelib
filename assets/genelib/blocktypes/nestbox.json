@@ -1,6 +1,6 @@
 {
     code: "nestbox",
-    class: "Genelib.BlockNest",
+    class: "BlockHenbox",
     entityclass: "Genelib.Nest",
     attributes: {
         inventoryClassName: "nestbox",

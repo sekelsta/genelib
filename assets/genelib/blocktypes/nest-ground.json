@@ -1,6 +1,6 @@
 {
     code: "nest-ground",
-    class: "Genelib.BlockNest",
+    class: "BlockHenbox",
     entityclass: "Genelib.Nest",
     attributes: {
         inventoryClassName: "nest-ground",

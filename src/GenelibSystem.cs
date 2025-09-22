@@ -55,7 +55,6 @@ namespace Genelib
                 prefix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("EntitySidedProperties_Ctor_Prefix", BindingFlags.Static | BindingFlags.Public)) 
             );
 
-            api.RegisterBlockClass("Genelib.BlockNest", typeof(BlockGeneticNest));
             api.RegisterBlockEntityClass("Genelib.Nest", typeof(GeneticNest));
 
             AiTaskRegistry.Register<AiTaskMate>("genelib.mate");
