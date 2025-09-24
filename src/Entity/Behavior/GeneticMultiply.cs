@@ -154,7 +154,9 @@ namespace Genelib {
 
             double totalDays = entity.World.Calendar.TotalDays;
 
-            if (TotalDaysCooldownUntil + DaysInHeat < totalDays) TotalDaysCooldownUntil += EstrousCycleDays;
+            if (TotalDaysCooldownUntil + DaysInHeat < totalDays) {
+                TotalDaysCooldownUntil += EstrousCycleDays;
+            }
 
             if (TotalDaysCooldownUntil > totalDays) return false;
 
@@ -574,7 +576,7 @@ namespace Genelib {
                     DaysInHeat *= Math.Clamp(entity.World.Calendar.DaysPerMonth, 3, 9) / 9;
                 }
                 else {
-                    DaysInHeat = 2;
+                    DaysInHeat = EstrousCycleDays;
                 }
             }
             if (attributes.KeyExists("breedingPeakMonth")) {
