@@ -3,6 +3,7 @@
     class: "BlockHenbox",
     entityclass: "Genelib.Nest",
     attributes: {
+        nestType: "ground",
         inventoryClassName: "nestbox",
         quantitySlots: 4,
         displayTransforms: [
@@ -11,7 +12,6 @@
             { translation: { x: 0.01857, y: 0.09, z: 0.073675 }, rotation: { x: 4, y: -32, z: -5 } },
             { translation: { x: 0.0899, y: 0.09, z: -0.03245 }, rotation: { x: -5, y: -94, z: -2 } },
         ],
-        suitableFor: ["game:chicken-hen","moreanimals:pheasant-hen","moreanimals:goldenpheasant-hen","moreanimals:capercaillie-hen","moreanimals:wildturkey-hen"],
         handbook: {
             extraSections: [
                 { title: "game:handbooktitle-henbox", text: "game:handbooktext-henbox" }
