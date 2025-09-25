@@ -455,13 +455,28 @@ namespace Genelib {
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
             this.Type = type;
 
-            byte[] autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArrayAttribute)?.value;
-            byte[] anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArrayAttribute)?.value;
-            byte[] bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArrayAttribute)?.value;
-            byte[] primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
-            byte[] secondary_xz = (geneticsTree.GetAttribute("secondary_xz") as ByteArrayAttribute)?.value;
-            byte[] yw = (geneticsTree.GetAttribute("yw") as ByteArrayAttribute)?.value;
             // TODO: Read these properly
+            byte[,] autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArray2DAttribute)?.value;
+            byte[,] anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArray2DAttribute)?.value;
+            byte[,] bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArray2DAttribute)?.value;
+            XZ = (geneticsTree.GetAttribute("xz") as ByteArray2DAttribute)?.value;
+            // Update from previous save format where primary and secondary XZ chromosomes were separate
+            byte[]? primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
+            byte[]? secondary_xz = (geneticsTree.GetAttribute("secondary_xz") as ByteArrayAttribute)?.value;
+            if (XZ == null && primary_xz != null) {
+                if (secondary_xz == null) {
+                    XZ = new byte[primary_xz.Length, 1];
+                    Buffer.BlockCopy(primary_xz, 0, XZ, 0, primary_xz.Length);
+                }
+                else {
+                    XZ = new byte[primary_xz.Length, 1];
+                    for (int i = 0; i < primary_xz.Length; ++i) {
+                        XZ[i, 0] = primary_xz[i];
+                        XZ[i, 1] = secondary_xz[i];
+                    }
+                }
+            }
+            YW = (geneticsTree.GetAttribute("yw") as ByteArray2DAttribute)?.value;
             UpdateForType();
         }
 
