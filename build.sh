@@ -1,6 +1,13 @@
 # To define the environment variable, put something like this in your .bashrc file:
 # export VINTAGE_STORY_DEV="$HOME/software/vintagestory_dev"
 
+# Intention: VINTAGE_STORY points to your Vintage Story install location
+# while VINTAGE_STORY_DATA points to your Vintage Story data location
+# Depending on how you set up those environment variables, you could use
+# a different game install between playing and devving, or just a different
+# data folder location (using the --dataPath argument on startup)
+VS_DATA=${VINTAGE_STORY_DATA:-~/.config/VintagestoryData}
+
 starttime=$(($(date +%s%N)/1000000))
 
 RED='\033[0;31m'
@@ -20,8 +27,8 @@ dotnet run --project ./Build/CakeBuild/CakeBuild.csproj -- "$@"
 rm assets/genelib/lang/es-es.json
 rm -r bin/
 rm -r src/obj/
-rm "${VINTAGE_STORY_DEV}"/Mods/genelib_*.zip
-cp Build/Releases/genelib_*.zip "${VINTAGE_STORY_DEV}/Mods"
+rm "${VS_DATA}"/Mods/genelib_*.zip
+cp Build/Releases/genelib_*.zip "${VS_DATA}/Mods"
 
 endtime=$(($(date +%s%N)/1000000))
 buildtime=$(( endtime - prebuild ))
