@@ -21,6 +21,20 @@ namespace Genelib {
         // Within each byte, the order is right to left - 0th is 0 bitshifts from the right, 1 is one bitshift from the right, etc.
         public byte[] Bitwise { get; private set; }
 
+        public int GetBitwiseAllele(int gene, int n) {
+            int b = gene % 8;
+            return (Bitwise[gene/8] >> b) & 1;
+        }
+
+        public void SetBitwiseAllele(int gene, int n, int val) {
+            int i = Ploidy * gene + n;
+            int b = i % 8;
+            byte v = Bitwise[i/8];
+            v = (byte)(v & ~(1 << b)); // Set to 0
+            v = (byte)(v | (val << b)); // Now set from 0 to val
+            Bitwise[i/8] = v;
+        }
+
         // Checks if any allele matches any of the given alleles, for an autosomal gene
         public bool HasAllele(int gene, params byte[] alleles) {
             bool result = false;
@@ -107,9 +121,10 @@ namespace Genelib {
 
         public int BitwiseSum(Range range) {
             int total = 0;
-            for (int g = Ploidy * range.Start.Value; g < Ploidy * range.End.Value; ++g) {
-                int b = g % 8;
-                total += (Bitwise[g/8] >> b) & 1;
+            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+                for (int n = 0; n < Ploidy; ++n) {
+                    total += GetBitwiseAllele(g, n);
+                }
             }
             return total;
         }
@@ -118,10 +133,8 @@ namespace Genelib {
             int total = 0;
             for (int g = range.Start.Value; g < range.End.Value; ++g) {
                 int v = 0;
-                for (int i = 0; i < Ploidy; ++i) {
-                    int index = (Ploidy * g + i) / 8;
-                    int offset = (Ploidy * g + i) % 8;
-                    v |= (Bitwise[index] >> offset) & 1;
+                for (int n = 0; n < Ploidy; ++n) {
+                    v |= GetBitwiseAllele(g, n);
                 }
                 total += v;
             }
@@ -132,10 +145,8 @@ namespace Genelib {
             int total = 0;
             for (int g = range.Start.Value; g < range.End.Value; ++g) {
                 int v = 1;
-                for (int i = 0; i < Ploidy; ++i) {
-                    int index = (Ploidy * g + i) / 8;
-                    int offset = (Ploidy * g + i) % 8;
-                    v &= (Bitwise[index] >> offset) & 1;
+                for (int n = 0; n < Ploidy; ++n) {
+                    v |= GetBitwiseAllele(g, n);
                 }
                 total += v;
             }
@@ -146,11 +157,9 @@ namespace Genelib {
             int total = 0;
             for (int g = range.Start.Value; g < range.End.Value; ++g) {
                 bool match = true;
-                int a = (Bitwise[Ploidy * g / 8] >> (Ploidy * g % 8)) & 1;
-                for (int i = 0; i < Ploidy; ++i) {
-                    int index = (Ploidy * g + i) / 8;
-                    int offset = (Ploidy * g + i) % 8;
-                    match = match && ((Bitwise[index] >> offset) & 1) == a;
+                int a = GetBitwiseAlelle(g, 0);
+                for (int n = 1; n < Ploidy; ++n) {
+                    match = match && GetBitwiseAllele(g, n) == a;
                 }
                 if (match) total += 1;
             }
@@ -300,6 +309,8 @@ namespace Genelib {
             return a;
         }
 
+        // In the unlikely circumstance that anybody wants to make a mod supporting polyploidy,
+        // AND wants chromosome pairing to be properly random, you'll want to override or harmony patch this function
         public virtual Genome CreateGamete(bool heterogametic, Random random) {
             if (Ploidy % 2 != 0) {
                 throw new InvalidOperationException("Not supported for odd ploidy (n=" + Ploidy + "). Genome type: " + Type.Name);
@@ -312,9 +323,7 @@ namespace Genelib {
             for (int p = 0; p < gamete.Ploidy; ++p) {
                 for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
                     int n = random.Next(2);
-                    int gIndex = gamete.Ploidy * gene + p;
-                    int pIndex = Ploidy * gene + 2 * p + n;
-                    gamete.Bitwise[gIndex / 8] |= (byte)(((Bitwise[pIndex / 8] >> (pIndex % 8)) & 1) << (gIndex % 8));
+                    gamete.SetBitwiseAllele(gene, p, GetBitwiseAllele(gene, 2 * p + n));
                 }
             }
 
@@ -353,14 +362,10 @@ namespace Genelib {
 
             for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
                 for (int p = 0; p < this.Bitwise.GetLength(1); ++p) {
-                    int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
-                    int gIndex = gene * this.Bitwise.GetLength(1) + p;
-                    zygote.Bitwise[zIndex/8] |= (byte)(((this.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8));
+                    zygote.SetBitwiseAllele(gene, p, getBitwiseAllele(gene, p));
                 }
                 for (int p = 0; p < other.Bitwise.GetLength(1); ++p) {
-                    int zIndex = gene * zygote.Bitwise.GetLength(1) + p;
-                    int gIndex = gene * other.Bitwise.GetLength(1) + this.Bitwise.GetLength(1) + p;
-                    zygote.Bitwise[zIndex/8] |= (byte)(((other.Bitwise[gIndex/8] >> (gIndex % 8)) & 1) << (zIndex % 8));
+                    zygote.SetBitwiseAllele(gene, p + Bitwise.GetLength(1), other.getBitwiseAllele(gene, p));
                 }
             }
 
@@ -445,20 +450,36 @@ namespace Genelib {
         }
 
         protected virtual void UpdateForType() {
+            bool moveCoiGenes = Autosomal.Length == 2 * 48 && Bitwise == null && Ploidy == 2; // TODO: Remove this after people have had a chance to update, but before it starts causing problems
             this.Autosomal = atLeastSize(Autosomal, Ploidy * Type.Autosomal.GeneCount);
             this.Anonymous = atLeastSize(Anonymous, Ploidy * Type.Anonymous.GeneCount);
             this.Bitwise = atLeastSize(Bitwise, (int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0));
             this.XZ = atLeastSize(XZ, (YW == null ? (int)Math.Ceiling(Ploidy/2.0) : Ploidy) * type.XZ.GeneCount);
             this.YW = atLeastSize(YW, (int)Math.Ceiling(Ploidy/2.0) * Type.YW.GeneCount);
+            if (moveCoiGenes) {
+                byte[,] oldAnonymous = Anonymous;
+                Anonymous = new Byte[Type.Anonymous.GeneCount, 2];
+                // Bitwise will have already been set to the new size
+                // Old anonymous gene format: 32 diversity genes (COI) followed by 16 vitality genes (deleterious)
+                Range deleterious = Type.Anonymous.TryGetRange("deleterious");
+                for (int i = deleterious.Start.Value; i < deleterious.End.Value; ++i) {
+                    Anonymous[i,0] = oldAnonymous[i - deleterious.Start.Value + 32, 0];
+                    Anonymous[i,1] = oldAnonymous[i - deleterious.Start.Value + 32, 1];
+                }
+                Range coi = Type.Bitwise.TryGetRange("coi");
+                for (int i = coi.Start.Value; i < coi.End.Value; ++i) {
+                    SetBitwiseAllele(i, 0, oldAnonymous[i - coi.Start.Value, 0]);
+                    SetBitwiseAllele(i, 1, oldAnonymous[i - coi.Start.Value, 1]);
+                }
+            }
         }
 
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
             this.Type = type;
 
-            // TODO: Read these properly
-            byte[,] autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArray2DAttribute)?.value;
-            byte[,] anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArray2DAttribute)?.value;
-            byte[,] bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArray2DAttribute)?.value;
+            Autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArray2DAttribute)?.value;
+            Anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArray2DAttribute)?.value;
+            Bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArray2DAttribute)?.value;
             XZ = (geneticsTree.GetAttribute("xz") as ByteArray2DAttribute)?.value;
             // Update from previous save format where primary and secondary XZ chromosomes were separate
             byte[]? primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
