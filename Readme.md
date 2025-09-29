@@ -52,3 +52,15 @@ To get genetics to work right, you will have to add a few specific EntityBehavio
 This library does not provide support for genetics on egg-laying species. Those features are still provided by [Detailed Animals](https://github.com/sekelsta/detailedanimals) instead.
 
 Aside from EntityBehaviors, if you have any sex-linked genes you should also add male:true/false to the entity's attributes to specify, for example, that roosters are male and hens are female. For convenience, if you leave this out it will take a guess based on the entity code + variant groups - if the whole thing contains the string "-female" it will be treated as female, otherwise as male.
+
+### Seasonal animal breeding
+Entities using `genelib.multiply` can configure it to have more realistic timing of the breeding. Supported options include:
+ - `breedingPeakMonth`, `breedingMonthsBefore`, and `breedingMonthsAfter` - These are what control the season during which the animal breeds. Enter these as numbers, e.g. 0.0 = January 1st, 1.0 = Febuary 1st, 1.5 = Febuary 15th, ..., 11.9 = December 28th. Those example dates are just guesstimates.
+ - `pregnancyMonths` which scales with year length and overrides `pregnancyDays` if both are present
+ - `multiplyCoolDownMonthsMin` and `multiplyCooldownMonthsMax`, which do likewise
+ - `lactationMonths` or `lactationDays` might get other uses in the future, but is currently only used by Detailed Animals for newborn animals to decide which adults they can nurse from
+ - `litterAddChance` which adjusts the probabilities of different sized litters between the max and the min
+ - `mateTaskPriority` - this should be set appropriately depending on the entity's aitasks behavior
+ - `inducedOvulation` true or false, defaults to false
+ - `estrousCycleMonths` or `estrousCycleDays`, which make the animal stop being receptive to mating for a time
+ - `daysInHeat`, how many days out of the total estrous cycle the animal will be ready to mate
