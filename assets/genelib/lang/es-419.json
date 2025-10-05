@@ -1,9 +1,9 @@
 {
-    "block-nestbox": "Caja nido",
+    "block-nestbox": "Nidal",
     "block-nest-ground": "Nido en el suelo",
     "gui-animalinfo-note": "Nota:",
-    "gui-animalinfo-preventbreeding": "Impida la reproducción",
-    "gui-animalinfo-breedingprevented": "Se impide la reproducción",
+    "gui-animalinfo-preventbreeding": "Evitar reproducción",
+    "gui-animalinfo-breedingprevented": "Reproducción impedida",
     "gui-animalinfo-inbreedingcoefficient": "CDE: {0}%",
     "gui-animalinfo-inbreedingcoefficient-desc": "Coeficiente de endogamia (probabilístico)",
     "gui-animalinfo-father": "Padre: {0}",
@@ -18,7 +18,7 @@
 
     "infotext-multiply-pregnancy": "{0} días de embarazo, de {1} en promedio",
     "infotext-multiply-earlypregnancy": "Temprano en el embarazo. Puede abortar.",
-    "infotext-multiply-latepregnancy": "Está muy embarazada.",
+    "infotext-multiply-latepregnancy": "En etapa avanzada del embarazo",
     "infotext-multiply-waitdays1": "Menos de un día hasta que esté lista para aparear",
     "infotext-multiply-waitdays2": "Dos días hasta que esté lista para aparear",
     "infotext-multiply-waitdays3": "Tres días hasta que esté lista para aparear",
