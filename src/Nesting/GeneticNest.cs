@@ -206,12 +206,12 @@ namespace Genelib {
                 if (chickData != null) {
                     string chickCode = chickData.GetString("code");
                     if (chickCode == null || chickCode == "") {
-                        info.AppendLine(" • " + Lang.Get("detailedanimals:blockinfo-fertilitylost"));
+                        info.AppendLine(" • " + Lang.Get("genelib:blockinfo-fertilitylost"));
                     }
                     else {
                         anyFertile = true;
                         double hours = stack.Attributes.GetDouble("incubationHoursRemaining", 0.0);
-                        info.AppendLine(" • " + Lang.Get("detailedanimals:infotext-incubationtime", VSExtensions.TranslateTimeFromHours(Api, hours)));
+                        info.AppendLine(" • " + Lang.Get("genelib:infotext-incubationtime", VSExtensions.TranslateTimeFromHours(Api, hours)));
                     }
                 }
             }
@@ -224,18 +224,18 @@ namespace Genelib {
                         info.AppendLine(Lang.Get("A broody hen is needed!"));
                     }
                     else if (!WasOccupied) {
-                        info.AppendLine(Lang.Get("detailedanimals:blockinfo-nestbox-eggs-warming"));
+                        info.AppendLine(Lang.Get("genelib:blockinfo-nestbox-eggs-warming"));
                     }
                     else if (!IsOccupiedClientside) {
-                        info.AppendLine(Lang.Get("detailedanimals:blockinfo-nestbox-eggs-cooling"));
+                        info.AppendLine(Lang.Get("genelib:blockinfo-nestbox-eggs-cooling"));
                     }
                     else {
-                        info.AppendLine(Lang.Get("detailedanimals:blockinfo-nestbox-eggs-incubating"));
+                        info.AppendLine(Lang.Get("genelib:blockinfo-nestbox-eggs-incubating"));
                     }
                 }
             }
             if (anyRot) {
-                info.AppendLine(Lang.Get("detailedanimals:blockinfo-nest-rotten"));
+                info.AppendLine(Lang.Get("genelib:blockinfo-nest-rotten"));
                 return;
             }
         }

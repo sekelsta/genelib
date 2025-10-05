@@ -70,20 +70,20 @@ namespace Genelib.Extensions {
         public static string TranslateTimeAmount(int years, int months, int days, int hours) {
             StringBuilder time = new StringBuilder("");
             if (years > 0) {
-                string yearsKey = "detailedanimals:time-year" + years;
-                time.Append((Lang.HasTranslation(yearsKey) ? Lang.Get(yearsKey) : Lang.Get("detailedanimals:time-year", years)) + " ");
+                string yearsKey = "genelib:time-year" + years;
+                time.Append((Lang.HasTranslation(yearsKey) ? Lang.Get(yearsKey) : Lang.Get("genelib:time-year", years)) + " ");
             }
             if (months > 0) {
-                string monthsKey = "detailedanimals:time-month" + months;
-                time.Append((Lang.HasTranslation(monthsKey) ? Lang.Get(monthsKey) : Lang.Get("detailedanimals:time-month", months)) + " ");
+                string monthsKey = "genelib:time-month" + months;
+                time.Append((Lang.HasTranslation(monthsKey) ? Lang.Get(monthsKey) : Lang.Get("genelib:time-month", months)) + " ");
             }
             if (years <= 0 && days > 0) {
-                string daysKey = "detailedanimals:time-day" + days;
-                time.Append((Lang.HasTranslation(daysKey) ? Lang.Get(daysKey) : Lang.Get("detailedanimals:time-day", days)) + " ");
+                string daysKey = "genelib:time-day" + days;
+                time.Append((Lang.HasTranslation(daysKey) ? Lang.Get(daysKey) : Lang.Get("genelib:time-day", days)) + " ");
             }
             if (years <= 0 && months <= 0 && hours > 0) {
-                string hoursKey = "detailedanimals:time-hour" + hours;
-                time.Append((Lang.HasTranslation(hoursKey) ? Lang.Get(hoursKey) : Lang.Get("detailedanimals:time-hour", hours)) + " ");
+                string hoursKey = "genelib:time-hour" + hours;
+                time.Append((Lang.HasTranslation(hoursKey) ? Lang.Get(hoursKey) : Lang.Get("genelib:time-hour", hours)) + " ");
             }
             return time.ToString().TrimEnd();
         }

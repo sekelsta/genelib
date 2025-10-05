@@ -1,6 +1,14 @@
 {
     "block-nestbox": "Legenest",
     "block-nest-ground": "Bodennest",
+    "blockinfo-fertilitylost": "Nicht mehr fruchtbar.",
+    "blockinfo-nest-rotten": "Verfaultes muss entfernt werden.",
+    "blockinfo-nestbox-eggs-warming": "Die Eier wärmen auf",
+    "blockinfo-nestbox-eggs-cooling": "Die Eier kühlen ab",
+    "blockinfo-nestbox-eggs-incubating": "Die Eier werden bebrütet",
+    "blockinfo-suitable-nestbox": "Geeignet für: {0}",
+    "infotext-incubationtime": "Verbleibende Inkubationszeit: {0}",
+
     "gui-animalinfo-note": "Hinweis:",
     "gui-animalinfo-preventbreeding": "Fortpflanzung verhindern",
     "gui-animalinfo-breedingprevented": "Fortpflanzung verhindert",
@@ -23,4 +31,13 @@
     "infotext-multiply-waitdays2": "Zwei Tage bis zur Paarungsfähigkeit.",
     "infotext-multiply-waitdays3": "Drei Tage bis zur Paarungsfähigkeit.",
     "infotext-multiply-waitdays4": "Vier Tage bis zur Paarungsfähigkeit.",
+
+    "time-year": "{0} Jahre",
+    "time-year1": "1 Jahr",
+    "time-month": "{0} Monate",
+    "time-month1": "1 Monat",
+    "time-day": "{0} Tage",
+    "time-day1": "1 Tag",
+    "time-hour": "{0} Stunden",
+    "time-hour1": "1 Stunde",
 }

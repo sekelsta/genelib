@@ -1,6 +1,15 @@
 {
     "block-nestbox": "Nestbox",
     "block-nest-ground": "Ground nest",
+    "blockinfo-fertilitylost": "No longer fertile.",
+    "blockinfo-nest-rotten": "Needs rot cleaned out",
+    "blockinfo-nestbox-eggs-warming": "Eggs are warming up",
+    "blockinfo-nestbox-eggs-cooling": "Eggs are cooling down",
+    "blockinfo-nestbox-eggs-incubating": "Eggs are being incubated",
+    "blockinfo-suitable-nestbox": "Suitable for: {0}",
+    "egg-fertile": "<font color=\"orange\">Fertile.</font> {0}",
+    "infotext-incubationtime": "Incubation time remaining: {0}",
+
     "gui-animalinfo-note": "Note:",
     "gui-animalinfo-preventbreeding": "Prevent breeding",
     "gui-animalinfo-breedingprevented": "Breeding prevented",
@@ -23,4 +32,13 @@
     "infotext-multiply-waitdays2": "Two days until ready to mate",
     "infotext-multiply-waitdays3": "Three days until ready to mate",
     "infotext-multiply-waitdays4": "Four days until ready to mate",
+
+    "time-year": "{0} years",
+    "time-year1": "1 year",
+    "time-month": "{0} months",
+    "time-month1": "1 month",
+    "time-day": "{0} days",
+    "time-day1": "1 day",
+    "time-hour": "{0} hours",
+    "time-hour1": "1 hour",
 }

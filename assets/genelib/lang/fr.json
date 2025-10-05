@@ -1,6 +1,11 @@
 {
 	"block-nestbox": "Pondoire",
     "block-nest-ground": "Nid au sol",
+    "blockinfo-fertilitylost": "N'est plus fertile.",
+    "blockinfo-nest-rotten": "Besoin de nettoyer les pourritures",
+    "blockinfo-suitable-nestbox": "Convient pour : {0}",
+    "infotext-incubationtime": "Temps restant d'incubation : {0}",
+
     "gui-animalinfo-note": "Note :",
     "gui-animalinfo-preventbreeding": "Empêcher la reproduction",
     "gui-animalinfo-breedingprevented": "Reproduction empêchée",
@@ -14,4 +19,13 @@
     "infotext-multiply-waitdays2": "Deux jours avant d'être prêt à s'accoupler",
     "infotext-multiply-waitdays3": "Trois jours avant d'être prêt à s'accoupler",
     "infotext-multiply-waitdays4": "Quatre jours avant d'être prêt à s'accoupler",
+
+    "time-year": "{0} ans",
+    "time-year1": "1 an",
+    "time-month": "{0} mois",
+    "time-month1": "1 mois",
+    "time-day": "{0} jours",
+    "time-day1": "1 jour",
+    "time-hour": "{0} heures",
+    "time-hour1": "1 heure",
 }

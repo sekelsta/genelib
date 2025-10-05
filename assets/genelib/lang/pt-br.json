@@ -1,6 +1,14 @@
 {
     "block-nestbox": "Ninho",
     "block-nest-ground": "Ninho selvagem",
+    "blockinfo-fertilitylost": "Não está mais fértil.",
+    "blockinfo-nest-rotten": "Precisa limpar a sujeira",
+    "blockinfo-nestbox-eggs-warming": "Os ovos estão aquecendo",
+    "blockinfo-nestbox-eggs-cooling": "Os ovos estão esfriando",
+    "blockinfo-nestbox-eggs-incubating": "Os ovos estão chocando",
+    "blockinfo-suitable-nestbox": "Disponivel po: {0}",
+    "infotext-incubationtime": "Tempo de incubação restante: {0}",
+
     "gui-animalinfo-note": "Nota:",
     "gui-animalinfo-preventbreeding": "Prevenir acasalamento",
     "gui-animalinfo-breedingprevented": "Acasalamento prevenido",
@@ -23,4 +31,13 @@
     "infotext-multiply-waitdays2": "Dois dias até estar pronto para reproduzir",
     "infotext-multiply-waitdays3": "Tres dias até estar pronto para reproduzir",
     "infotext-multiply-waitdays4": "Quatro dias até estar pronto para reproduzir",
+
+    "time-year": "{0} anos",
+    "time-year1": "1 ano",
+    "time-month": "{0} mêses",
+    "time-month1": "1 mês",
+    "time-day": "{0} dias",
+    "time-day1": "1 dia",
+    "time-hour": "{0} horas",
+    "time-hour1": "1 hora",
 }

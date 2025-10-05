@@ -1,6 +1,15 @@
 {
     "block-nestbox": "Nidal",
     "block-nest-ground": "Nido en el suelo",
+    "blockinfo-fertilitylost": "Ya no es fértil.",
+    "blockinfo-nest-rotten": "Necesita limpiarse la putrefacción",
+    "blockinfo-nestbox-eggs-warming": "Los huevos se están calentando",
+    "blockinfo-nestbox-eggs-cooling": "Los huevos se están enfriando",
+    "blockinfo-nestbox-eggs-incubating": "Los huevos están siendo incubados",
+    "blockinfo-suitable-nestbox": "Adecuada para: {0}",
+    "egg-fertile": "<font color=\"orange\">Fértil.</font> {0}",
+    "infotext-incubationtime": "Tiempo de incubación restante: {0}",
+
     "gui-animalinfo-note": "Nota:",
     "gui-animalinfo-preventbreeding": "Evitar reproducción",
     "gui-animalinfo-breedingprevented": "Reproducción impedida",
@@ -23,4 +32,13 @@
     "infotext-multiply-waitdays2": "Dos días hasta que esté lista para aparear",
     "infotext-multiply-waitdays3": "Tres días hasta que esté lista para aparear",
     "infotext-multiply-waitdays4": "Cuatros días hasta que esté lista para aparear",
+
+    "time-year": "{0} años",
+    "time-year1": "1 año",
+    "time-month": "{0} meses",
+    "time-month1": "1 mes",
+    "time-day": "{0} días",
+    "time-day1": "1 día",
+    "time-hour": "{0} horas",
+    "time-hour1": "1 hora",
 }
