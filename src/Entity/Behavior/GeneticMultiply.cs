@@ -17,6 +17,8 @@ namespace Genelib {
     public class GeneticMultiply : EntityBehaviorMultiply {
         public const string Code = "genelib.multiply";
 
+        public static readonly string[] Months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+
         // Wait this long (as a fraction of the total pregnancy length) before discarding non-viable embryos
         protected double ViabilityCheckDelay = 0.125;
         // Fraction of embryos considered non-viable, randomly determined (a second check after gene viability)
@@ -474,14 +476,17 @@ namespace Genelib {
             IGameCalendar calendar = entity.World.Calendar;
             double season = (calendar.GetSeasonRel(entity.Pos.AsBlockPos) + daysLeft / calendar.DaysPerMonth / 12) % 1;
             if (!IsBreedingSeason(season)) {
-                // TODO: Remove this and put the info in the handbook instead
-                double breedingStart = (BreedingSeasonPeak - BreedingSeasonBefore + 1) % 1;
-                if (breedingStart < 0.5) {
-                    infotext.AppendLine(Lang.Get("detailedanimals:infotext-reproduce-longday"));
-                }
-                else {
-                    infotext.AppendLine(Lang.Get("detailedanimals:infotext-reproduce-shortday"));
-                }
+                EnumHemisphere hemisphere = entity.World.Calendar.GetHemisphere(entity.Pos.AsBlockPos);
+                double hem = hemisphere == EnumHemisphere.North ? 0 : 0.5;
+                double breedingStart = ((BreedingSeasonPeak - BreedingSeasonBefore + hem + 1) % 1) * 12;
+                double offsetStart = breedingStart - (int)breedingStart;
+                double breedingEnd = ((BreedingSeasonPeak + BreedingSeasonAfter + hem) % 1) * 12;
+                double offsetEnd = breedingEnd - (int)breedingEnd;
+                infotext.AppendLine(
+                    Lang.GetUnformatted("genelib:infotext-multiply-season")
+                    .Replace("{start}", Lang.Get($"genelib:month-{Months[(int)breedingStart]}-{(offsetStart < 0.33 ? "early" : offsetStart > 0.66 ? "late" : "mid")}"))
+                    .Replace("{end}", Lang.Get($"genelib:month-{Months[(int)breedingEnd]}-{(offsetEnd < 0.33 ? "early" : offsetEnd > 0.66 ? "late" : "mid")}"))
+                );
                 return;
             }
 

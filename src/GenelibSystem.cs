@@ -38,6 +38,8 @@ namespace Genelib
 
         // Called on server and client
         public override void Start(ICoreAPI api) {
+            ServerAPI ??= api as ICoreServerAPI;
+            ClientAPI ??= api as ICoreClientAPI;
             harmony.Patch(
                 typeof(ServerMain).GetMethod("SendServerAssets", BindingFlags.Instance | BindingFlags.Public),
                 postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("SendServerAssets_Postfix", BindingFlags.Static | BindingFlags.Public)) 
@@ -181,7 +183,8 @@ namespace Genelib
         }
 
         public static bool EntitySidedProperties_Ctor_Prefix(EntitySidedProperties __instance, ref JsonObject[] behaviors, ref Dictionary<string, JsonObject> commonConfigs) {
-            if (!AutoadjustAnimalBehaviors && (commonConfigs == null || !commonConfigs.ContainsKey(GeneticMultiply.Code))) {
+            bool commonGeneticMultiply = commonConfigs?.ContainsKey(GeneticMultiply.Code) == true;
+            if (!AutoadjustAnimalBehaviors && (commonConfigs == null || !commonGeneticMultiply)) {
                 return true;
             }
             int multiplyIndex = -1;
@@ -199,7 +202,7 @@ namespace Genelib
 
             // Might have to also merge multiply commonconfig with genelib.multiply's for future mod compat
 
-            if (commonConfigs != null) {
+            if (commonConfigs != null && !commonGeneticMultiply) {
                 commonConfigs.Remove("multiply", out JsonObject multiplyConfig);
                 if (multiplyConfig != null) {
                     commonConfigs.Add(GeneticMultiply.Code, multiplyConfig);
