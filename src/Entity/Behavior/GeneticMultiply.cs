@@ -473,6 +473,7 @@ namespace Genelib {
             }
 
             double daysLeft = TotalDaysCooldownUntil - entity.World.Calendar.TotalDays;
+
             IGameCalendar calendar = entity.World.Calendar;
             double season = (calendar.GetSeasonRel(entity.Pos.AsBlockPos) + daysLeft / calendar.DaysPerMonth / 12) % 1;
             if (!IsBreedingSeason(season)) {
@@ -532,7 +533,6 @@ namespace Genelib {
             {
                 sec = attributes["spawnEntityCode"];    // The simple property as it was pre-1.19 - can still be used, suitable for the majority of cases
                 if (sec.Exists) SpawnEntityCodes = new AssetLocation[] { new AssetLocation(sec.AsString("")) };
-                return;
             }
             if (sec.IsArray())
             {

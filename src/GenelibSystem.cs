@@ -184,7 +184,7 @@ namespace Genelib
 
         public static bool EntitySidedProperties_Ctor_Prefix(EntitySidedProperties __instance, ref JsonObject[] behaviors, ref Dictionary<string, JsonObject> commonConfigs) {
             bool commonGeneticMultiply = commonConfigs?.ContainsKey(GeneticMultiply.Code) == true;
-            if (!AutoadjustAnimalBehaviors && (commonConfigs == null || !commonGeneticMultiply)) {
+            if (!AutoadjustAnimalBehaviors && !commonGeneticMultiply) {
                 return true;
             }
             int multiplyIndex = -1;
