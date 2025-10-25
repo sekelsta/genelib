@@ -49,10 +49,13 @@ namespace Genelib.Extensions {
         }
 
         public static string GetLangOptionallySuffixed(string key, string suffix) {
-            if (Lang.HasTranslation(key)) {
+            if (Lang.HasTranslation(key + suffix)) {
+                return Lang.Get(key + suffix);
+            }
+            else if (Lang.HasTranslation(key)) {
                 return Lang.Get(key);
             }
-            return Lang.Get(key + suffix);
+            return key + "(" + suffix + ")";
         }
 
         public static string TranslateTimeFromHours(ICoreAPI api, double hours) {
