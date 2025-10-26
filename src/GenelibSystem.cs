@@ -70,6 +70,10 @@ namespace Genelib
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
 
             GenelibConfig.Load(api);
+
+            GenelibConfig.AnimalYearsScaleWithGameYears = API.ModLoader.IsModEnabled("seasonalbreeding"); // TO_LATER_DO: More configurable way to set this
+            GenelibConfig.AnimalYearSpeed = GenelibConfig.AnimalYearsScaleWithGameYears ? 1 : 6;
+            api.Logger.Notification("sekdebug " + GenelibConfig.AnimalYearSpeed);
         }
 
         public override void AssetsLoaded(ICoreAPI api) {
@@ -145,7 +149,7 @@ namespace Genelib
         public static void Grow_Initialize_Postfix(EntityBehaviorGrow __instance, EntityProperties properties, JsonObject typeAttributes) {
             IGameCalendar calendar = __instance.entity.World.Calendar;
             if (typeAttributes.KeyExists("monthsToGrow")) {
-                __instance.HoursToGrow = typeAttributes["monthsToGrow"].AsFloat() * calendar.DaysPerMonth * calendar.HoursPerDay;
+                __instance.HoursToGrow = (float)GenelibConfig.AnimalMonthsToGameDays(typeAttributes["monthsToGrow"].AsDouble());
             }
         }
 

@@ -51,8 +51,9 @@ namespace Genelib {
         // Make litter size a bell curve instead of a uniform
         protected double litterAddChance = 0.5;
 
-        // Seasonal breeding
         protected double LactationDays = 0;
+
+        // Seasonal breeding
         protected double EstrousCycleDays;
         protected double DaysInHeat;
         protected bool InducedOvulation = false;
@@ -419,6 +420,10 @@ namespace Genelib {
             return spawn;
         }
 
+        public bool IsLactating() {
+            return TotalDaysLastBirth + LactationDays >= entity.World.Calendar.TotalDays;
+        }
+
         public virtual bool CanLayEgg() {
             return false;
         }
@@ -508,7 +513,7 @@ namespace Genelib {
             base.Initialize(properties, attributes);
 
             if (attributes.KeyExists("pregnancyMonths")) {
-                PregnancyDays = attributes["pregnancyMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                PregnancyDays = GenelibConfig.AnimalMonthsToGameDays(attributes["pregnancyMonths"].AsDouble());
                 pregnancyDaysSpecified = true;
             }
             else {
@@ -554,10 +559,10 @@ namespace Genelib {
             }
 
             if (attributes.KeyExists("multiplyCooldownMonthsMin")) {
-                MultiplyCooldownDaysMin = attributes["multiplyCooldownMonthsMin"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                MultiplyCooldownDaysMin = GenelibConfig.AnimalMonthsToGameDays(attributes["multiplyCooldownMonthsMin"].AsDouble());
             }
             if (attributes.KeyExists("multiplyCooldownMonthsMax")) {
-                MultiplyCooldownDaysMax = attributes["multiplyCooldownMonthsMax"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                MultiplyCooldownDaysMax = GenelibConfig.AnimalMonthsToGameDays(attributes["multiplyCooldownMonthsMax"].AsDouble());
             }
 
             // Seasonal breeding
@@ -568,7 +573,7 @@ namespace Genelib {
             }
             else {
                 if (attributes.KeyExists("estrousCycleMonths")) {
-                    EstrousCycleDays = attributes["estrousCycleMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                    EstrousCycleDays = GenelibConfig.AnimalMonthsToGameDays(attributes["estrousCycleMonths"].AsDouble());
                 }
                 else if (attributes.KeyExists("estrousCycleDays")) {
                     EstrousCycleDays = attributes["estrousCycleDays"].AsDouble();
@@ -579,7 +584,9 @@ namespace Genelib {
 
                 if (attributes.KeyExists("daysInHeat")) {
                     DaysInHeat = attributes["daysInHeat"].AsDouble();
-                    DaysInHeat *= Math.Clamp(entity.World.Calendar.DaysPerMonth, 3, 9) / 9;
+                    if (GenelibConfig.AnimalYearsScaleWithGameYears) {
+                        DaysInHeat *= Math.Clamp(entity.World.Calendar.DaysPerMonth, 3, 9) / 9;
+                    }
                 }
                 else {
                     DaysInHeat = EstrousCycleDays;
@@ -593,7 +600,7 @@ namespace Genelib {
             }
 
             if (attributes.KeyExists("lactationMonths")) {
-                LactationDays = attributes["lactationMonths"].AsDouble() * entity.World.Calendar.DaysPerMonth;
+                LactationDays = GenelibConfig.AnimalMonthsToGameDays(attributes["lactationMonths"].AsDouble());
             }
             else if (attributes.KeyExists("lactationDays")) {
                 LactationDays = attributes["lactationDays"].AsDouble();

@@ -6,6 +6,11 @@ namespace Genelib {
         public static GenelibConfig Instance = null;
 
         public static double MutationRate = 0.00004;
+
+        public static bool AnimalYearsScaleWithGameYears = false;
+        public static double AnimalYearSpeed = 1;
+        public static double AnimalMonthsToGameDays(double months) => (AnimalYearsScaleWithGameYears ? GenelibSystem.API.World.Calendar.DaysPerMonth : 30) * months / AnimalYearSpeed;
+
         public static double EggIncubationTime = 1;
 
         public float InbreedingResistance = 0.6f;
