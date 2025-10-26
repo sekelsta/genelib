@@ -54,7 +54,7 @@ This library does not provide support for genetics on egg-laying species. Those 
 Aside from EntityBehaviors, if you have any sex-linked genes you should also add male:true/false to the entity's attributes to specify, for example, that roosters are male and hens are female. For convenience, if you leave this out it will take a guess based on the entity code + variant groups - if the whole thing contains the string "-female" it will be treated as female, otherwise as male.
 
 ### Seasonal animal breeding
-Entities using `genelib.multiply` can configure it to have more realistic timing of the breeding. Supported options include:
+Entities using `genelib.multiply` can configure it to have more realistic timing of the breeding if the `seasonalbreeding` is installed. Supported options include:
  - `breedingPeakMonth`, `breedingMonthsBefore`, and `breedingMonthsAfter` - These are what control the season during which the animal breeds. Enter these as numbers, e.g. 0.0 = January 1st, 1.0 = Febuary 1st, 1.5 = Febuary 15th, ..., 11.9 = December 28th. Those example dates are just guesstimates.
  - `pregnancyMonths` which scales with year length and overrides `pregnancyDays` if both are present
  - `multiplyCoolDownMonthsMin` and `multiplyCooldownMonthsMax`, which do likewise
@@ -64,3 +64,5 @@ Entities using `genelib.multiply` can configure it to have more realistic timing
  - `inducedOvulation` true or false, defaults to false
  - `estrousCycleMonths` or `estrousCycleDays`, which make the animal stop being receptive to mating for a time
  - `daysInHeat`, how many days out of the total estrous cycle the animal will be ready to mate
+As of version 2.1.4, these options will only scale with year length if the `seasonalbreeding` mod is installed. Otherwise, animals will use months at a fixed rate of 5 days per month. Feel free to let me know if you are trying to do mod compatibility and this detail gets in your way - I'm sure there's a better way it could be set up. Or, if I'm unavailable or you're just shy, it can also be changed from code (by modifying static fields in GenelibConfig).
+
