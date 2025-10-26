@@ -435,6 +435,7 @@ namespace Genelib {
             }
 
             multiplyTree = entity.WatchedAttributes.GetTreeAttribute("multiply");
+            if (multiplyTree == null) return; // Can happen in the first few frames
 
             if (IsPregnant) {
                 if (!pregnancyDaysSpecified) {
@@ -598,7 +599,7 @@ namespace Genelib {
                 LactationDays = attributes["lactationDays"].AsDouble();
             }
 
-            if (IsPregnant) {
+            if (entity.Api.Side == EnumAppSide.Server && IsPregnant) {
                 if (Litter == null) {
                     IsPregnant = false;
                 }
