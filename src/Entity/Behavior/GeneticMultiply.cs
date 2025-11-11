@@ -393,8 +393,10 @@ namespace Genelib {
             AssetLocation spawnCode = new AssetLocation(childData.GetString("code"));
             EntityProperties spawnType = world.GetEntityType(spawnCode);
             if (spawnType == null) {
-                throw new ArgumentException(foster?.Code.ToString() + " attempted to hatch or give birth to entity with code " 
-                    + spawnCode.ToString() + ", but no such entity was found.");
+                // TODO: Try fetching from remappings
+                return null;
+                //throw new ArgumentException(foster?.Code.ToString() + " attempted to hatch or give birth to entity with code " 
+                //    + spawnCode.ToString() + ", but no such entity was found.");
             }
             Entity spawn = world.ClassRegistry.CreateEntity(spawnType);
             spawn.ServerPos.SetFrom(pos);

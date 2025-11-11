@@ -145,7 +145,7 @@ namespace Genelib {
                         pos.Y += 0.05;
                         Entity chick = GeneticMultiply.SpawnNewborn(Api.World, pos, occupier, chickData.GetInt("generation", 0), chickData);
                         inventory[i].Itemstack = null;
-                        if (LastOccupier != -1 && !chick.WatchedAttributes.HasAttribute("fosterId")) {
+                        if (LastOccupier != -1 && chick != null && !chick.WatchedAttributes.HasAttribute("fosterId")) {
                             chick.WatchedAttributes.SetLong("fosterId", LastOccupier);
                         }
                     }
