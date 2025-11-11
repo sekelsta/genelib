@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -510,6 +511,9 @@ namespace Genelib {
 
         public override void Initialize(EntityProperties properties, JsonObject attributes)
         {
+            if (attributes.KeyExists("litterAddAttempts")) {
+                attributes["spawnQuantityMax"].Token = new JValue(attributes["spawnQuantityMin"].AsInt() + attributes["litterAddAttempts"].AsInt());
+            }
             base.Initialize(properties, attributes);
 
             if (attributes.KeyExists("pregnancyMonths")) {

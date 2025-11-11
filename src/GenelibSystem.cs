@@ -73,7 +73,6 @@ namespace Genelib
 
             GenelibConfig.AnimalYearsScaleWithGameYears = API.ModLoader.IsModEnabled("seasonalbreeding"); // TO_LATER_DO: More configurable way to set this
             GenelibConfig.AnimalYearSpeed = GenelibConfig.AnimalYearsScaleWithGameYears ? 1 : 6;
-            api.Logger.Notification("sekdebug " + GenelibConfig.AnimalYearSpeed);
         }
 
         public override void AssetsLoaded(ICoreAPI api) {
