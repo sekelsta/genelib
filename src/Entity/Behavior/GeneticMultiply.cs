@@ -191,11 +191,13 @@ namespace Genelib {
             if (!(sireTaskAi.TaskManager.ActiveTasksBySlot[0] is AiTaskMate)) {
                 AiTaskMate sireMateTask = new AiTaskMate((EntityAgent)sire, entity);
                 sireMateTask.SetPriority(MateTaskPriority);
+                sireTaskAi.TaskManager.StopTasks();
                 sireTaskAi.TaskManager.ExecuteTask(sireMateTask, 0);
             }
 
             AiTaskMate mateTask = new AiTaskMate((EntityAgent)entity, sire);
             mateTask.SetPriority(MateTaskPriority);
+            taskAi.TaskManager.StopTasks();
             taskAi.TaskManager.ExecuteTask(mateTask, 0);
 
             return false;
