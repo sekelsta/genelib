@@ -9,6 +9,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
 using Genelib.Extensions;
@@ -392,13 +393,18 @@ namespace Genelib {
         }
 
         public static Entity SpawnNewborn(IWorldAccessor world, EntityPos pos, Entity foster, int nextGeneration, TreeAttribute childData) {
+            if (world.Side != EnumAppSide.Server) return null;
+
             AssetLocation spawnCode = new AssetLocation(childData.GetString("code"));
+            if (((IServerWorldAccessor)world).RemappedEntities.TryGetValue(spawnCode, out string remap))
+            {
+                spawnCode = remap;
+            }
             EntityProperties spawnType = world.GetEntityType(spawnCode);
             if (spawnType == null) {
-                // TODO: Try fetching from remappings
+                world.Logger.Warning(foster?.Code.ToString() + " attempted to hatch or give birth to entity with code " 
+                    + spawnCode.ToString() + ", but no such entity was found.");
                 return null;
-                //throw new ArgumentException(foster?.Code.ToString() + " attempted to hatch or give birth to entity with code " 
-                //    + spawnCode.ToString() + ", but no such entity was found.");
             }
             Entity spawn = world.ClassRegistry.CreateEntity(spawnType);
             spawn.ServerPos.SetFrom(pos);
