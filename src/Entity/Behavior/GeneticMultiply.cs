@@ -345,14 +345,14 @@ namespace Genelib {
                 offspring.SetString("code", offspringCode.ToString());
 
                 offspring.SetLong("motherId", entity.UniqueID());
-                string motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+                string motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName"); // customName is used by the Entity Nametags mod
                 if (motherName != null && motherName != "") {
                     offspring.SetString("motherName", motherName);
                 }
                 offspring.SetString("motherKey", entity.Code.Domain + ":item-creature-" + entity.Code.Path);
 
                 offspring.SetLong("fatherId", sire.UniqueID());
-                string fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+                string fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName");
                 if (fatherName != null && fatherName != "") {
                     offspring.SetString("fatherName", fatherName);
                 }
