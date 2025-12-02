@@ -26,8 +26,10 @@
     "gui-hotkey-animalinfo": "Open animal profile",
 
     "infotext-multiply-pregnancy": "{0} days pregnant, of {1} on average",
-    "infotext-multiply-earlypregnancy": "Early in pregnancy. May miscarry.",
+    "infotext-multiply-earlypregnancy": "Might be pregnant",
     "infotext-multiply-latepregnancy": "Is very pregnant",
+    "infotext-multiply-miscarriage-lethalgenes": "Miscarried due to nonviable genetics",
+    "infotext-multiply-miscarriage-malnutrition": "Miscarried due to malnutrition",
     "infotext-multiply-waitdays1": "Less than a day until ready to mate",
     "infotext-multiply-waitdays2": "Two days until ready to mate",
     "infotext-multiply-waitdays3": "Three days until ready to mate",

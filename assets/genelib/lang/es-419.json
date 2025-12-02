@@ -26,8 +26,10 @@
     "gui-hotkey-animalinfo": "Abrir perfil de animal",
 
     "infotext-multiply-pregnancy": "{0} días de embarazo, de {1} en promedio",
-    "infotext-multiply-earlypregnancy": "Temprano en el embarazo. Puede abortar.",
+    "infotext-multiply-earlypregnancy": "Podría estar embarazada",
     "infotext-multiply-latepregnancy": "En etapa avanzada del embarazo",
+    "infotext-multiply-miscarriage-lethalgenes": "Abortado por genética no viable",
+    "infotext-multiply-miscarriage-malnutrition": "Abortado por desnutrición",
     "infotext-multiply-waitdays1": "Menos de un día hasta que esté lista para aparear",
     "infotext-multiply-waitdays2": "Dos días hasta que esté lista para aparear",
     "infotext-multiply-waitdays3": "Tres días hasta que esté lista para aparear",

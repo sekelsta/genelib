@@ -131,6 +131,7 @@ namespace Genelib {
                         }
                         if (surviving.Count == 0) {
                             SetNotPregnant();
+                            multiplyTree.SetDouble("geneticLethalLossTotalHours", entity.World.Calendar.TotalHours);
                         }
                         else {
                             Litter.value = surviving.ToArray();
@@ -453,6 +454,10 @@ namespace Genelib {
             if (multiplyTree == null) return; // Can happen in the first few frames
 
             if (IsPregnant) {
+                if (InEarlyPregnancy) {
+                    infotext.AppendLine(Lang.Get("genelib:infotext-multiply-earlypregnancy"));
+                    return;
+                }
                 if (!pregnancyDaysSpecified) {
                     infotext.AppendLine(Lang.Get("Is pregnant"));
                     return;
@@ -460,14 +465,20 @@ namespace Genelib {
                 int passed = (int)Math.Round(entity.World.Calendar.TotalDays - TotalDaysPregnancyStart);
                 int expected = (int)Math.Round(PregnancyDays);
                 infotext.AppendLine(Lang.Get("genelib:infotext-multiply-pregnancy", passed, expected));
-                if (InEarlyPregnancy) {
-                    infotext.AppendLine(Lang.Get("genelib:infotext-multiply-earlypregnancy"));
-                }
-                else if (entity.World.Calendar.TotalDays > TotalDaysPregnancyStart + PregnancyDays * LatePregnancy) {
+                if (entity.World.Calendar.TotalDays > TotalDaysPregnancyStart + PregnancyDays * LatePregnancy) {
                     infotext.AppendLine(Lang.Get("genelib:infotext-multiply-latepregnancy"));
                 }
                 return;
             }
+            else if (entity.World.Calendar.TotalHours - multiplyTree.GetDouble("geneticLethalLossTotalHours", -999999) < 24 * 2)
+            {
+                infotext.AppendLine(Lang.Get("genelib:infotext-multiply-miscarriage-lethalgenes"));
+            }
+            else if (entity.World.Calendar.TotalHours - multiplyTree.GetDouble("malnutritionLossTotalHours", -999999) < 24 * 2)
+            {
+                infotext.AppendLine(Lang.Get("genelib:infotext-multiply-miscarriage-malnutrition"));
+            }
+
             if (entity.WatchedAttributes.GetBool("neutered", false)) {
                 return;
             }
