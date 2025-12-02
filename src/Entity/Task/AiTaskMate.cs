@@ -21,6 +21,7 @@ namespace Genelib {
             base.StartExecute();
             prevAlwaysActiveValue = entity.AlwaysActive;
             entity.AlwaysActive = true;
+            entity.State = EnumEntityState.Active;
         }
 
         public override bool ContinueExecute(float dt) {
