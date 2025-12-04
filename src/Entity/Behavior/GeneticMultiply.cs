@@ -128,7 +128,7 @@ namespace Genelib {
                         foreach (TreeAttribute childTree in Litter.value) {
                             if (childTree.GetBool("viable", true) == false) continue;
                             Genome childGenome = new Genome(gb.Genome.Type, childTree);
-                            if (!childGenome.EmbryonicLethal()) {
+                            if (!childGenome.IsEmbryonicLethal()) {
                                 surviving.Add(childTree);
                             }
                         }
@@ -327,7 +327,6 @@ namespace Genelib {
             int litterSize = ChooseLitterSize();
 
             List<TreeAttribute> litter = new List<TreeAttribute>();
-            List<string> genesDebug = new List<string>();
             for (int i = 0; i < litterSize; ++i) {
                 TreeAttribute offspring = new TreeAttribute();
                 if (entity.World.Rand.NextSingle() < MiscarriageChance) {
@@ -340,30 +339,28 @@ namespace Genelib {
                     Genome child = new Genome(ourGenome, sireGenome, heterogametic, entity.World.Rand);
                     child.Mutate(GenelibConfig.MutationRate, entity.World.Rand);
                     TreeAttribute childGeneticsTree = (TreeAttribute) offspring.GetOrAddTreeAttribute("genetics");
-                    if (ViabilityCheckDelay == 0 && child.EmbryonicLethal()) {
+                    if (ViabilityCheckDelay == 0 && child.IsEmbryonicLethal()) {
                         continue;
                     }
                     child.AddToTree(childGeneticsTree);
-                    genesDebug.Add(child.anonymous.ArrayToString());
                 }
                 offspring.SetString("code", offspringCode.ToString());
 
                 offspring.SetLong("motherId", entity.UniqueID());
-                string motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName"); // customName is used by the Entity Nametags mod
+                string? motherName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName"); // customName is used by the Entity Nametags mod
                 if (motherName != null && motherName != "") {
                     offspring.SetString("motherName", motherName);
                 }
                 offspring.SetString("motherKey", entity.Code.Domain + ":item-creature-" + entity.Code.Path);
 
                 offspring.SetLong("fatherId", sire.UniqueID());
-                string fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName");
+                string? fatherName = sire.GetBehavior<EntityBehaviorNameTag>()?.DisplayName ?? entity.WatchedAttributes.GetString("customName");
                 if (fatherName != null && fatherName != "") {
                     offspring.SetString("fatherName", fatherName);
                 }
                 offspring.SetString("fatherKey", sire.Code.Domain + ":item-creature-" + sire.Code.Path);
                 litter.Add(offspring);
             }
-            string offspringGenes = genesDebug.Count == 0 ? "" : "\n    pgenes=" + String.Join("\n    pgenes=", genesDebug);
 
             if (litter.Count == 0) {
                 if (litterSize > 0 && MiscarriageCooldown > 0) {
@@ -389,7 +386,11 @@ namespace Genelib {
         protected override void GiveBirth(float q) {
             int nextGeneration = entity.WatchedAttributes.GetInt("generation", 0) + 1;
             TreeAttribute[]? litterData = Litter?.value;
-            if (litterData != null) {
+
+            if (litterData == null) {
+                entity.Api.Logger.Warning("Entity " + entity.Code + " gave birth but with null litter data, so 0 offspring were produced.");
+            }
+            else {
                 foreach (TreeAttribute childData in litterData) {
                     Entity? spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
                 }

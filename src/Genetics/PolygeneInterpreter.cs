@@ -10,7 +10,7 @@ namespace Genelib {
 
         public string Name => "Polygenes";
 
-        void GeneInterpreter.Finalize(Genome genome, AlleleFrequencies frequencies, Random random) {
+        void GeneInterpreter.FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
             for (int i = 2 * NUM_DIVERSITY_GENES; i < 2 * (NUM_DIVERSITY_GENES + NUM_VITALITY_GENES); ++i) {
                 if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
                     genome.anonymous[i] = 0;
@@ -33,7 +33,7 @@ namespace Genelib {
             return duplicates;
         }
 
-        bool GeneInterpreter.EmbryonicLethal(Genome genome) {
+        bool GeneInterpreter.IsEmbryonicLethal(Genome genome) {
             return countVitalityHomozygotes(genome) >= 4;
         }
 

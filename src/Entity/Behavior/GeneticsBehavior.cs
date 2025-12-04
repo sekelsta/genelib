@@ -12,8 +12,8 @@ namespace Genelib {
     public class EntityBehaviorGenetics : EntityBehavior {
         public const string Code = "genelib.genetics";
 
-        protected GenomeType GenomeType { get; set; }
-        private Genome genome;
+        protected GenomeType GenomeType { get; set; } = null!;
+        private Genome genome = null!;
         public Genome Genome {
             get => genome;
             set {
@@ -22,15 +22,9 @@ namespace Genelib {
             }
         }
         protected string[]? initializers;
-        protected AlleleFrequencies defaultFrequencies;
+        protected AlleleFrequencies defaultFrequencies = null!;
 
-        public EntityBehaviorGenetics(Entity entity)
-          : base(entity)
-        {
-            genome = null!;
-            GenomeType = null!;
-            defaultFrequencies = null!;
-        }
+        public EntityBehaviorGenetics(Entity entity) : base(entity) { }
 
         public override void Initialize(EntityProperties properties, JsonObject attributes) {
             GenomeType = GenomeType.Get(
@@ -78,7 +72,7 @@ namespace Genelib {
                         }
                     }
                     foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
-                        interpreter.Finalize(Genome, frequencies, random);
+                        interpreter.FinalizeSpawn(Genome, frequencies, random);
                     }
                 }
             }

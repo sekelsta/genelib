@@ -251,9 +251,9 @@ namespace Genelib {
             return this;
         }
 
-        public bool EmbryonicLethal() {
+        public bool IsEmbryonicLethal() {
             foreach (GeneInterpreter interpreter in Type.Interpreters) {
-                if (interpreter.EmbryonicLethal(this)) {
+                if (interpreter.IsEmbryonicLethal(this)) {
                     return true;
                 }
             }

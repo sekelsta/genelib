@@ -22,5 +22,12 @@ namespace Genelib.Extensions {
             }
             return "[" + string.Join(",", array) + "]";
         }
+
+        public static string ArrayToString<T>(this T[,] array) {
+            if (array == null) {
+                return "null";
+            }
+            return "[" + string.Join(",", array) + "]";
+        }
     }
 }
