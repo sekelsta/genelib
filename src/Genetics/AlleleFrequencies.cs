@@ -6,8 +6,6 @@ using Vintagestory.API.Datastructures;
 
 using Genelib.Extensions;
 
-#nullable disable
-
 namespace Genelib {
     public class AlleleFrequencies {
         public GenomeType ForType { get; private set; }
@@ -39,11 +37,11 @@ namespace Genelib {
             foreach (JProperty jp in ((JObject) genesObject.Token).Properties()) {
                 string geneName = jp.Name;
                 int geneID = mappings.GeneID(geneName);
-                string defaultAlleleName = null;
+                string? defaultAlleleName = null;
                 JObject jsonFrequencies = (JObject) jp.Value;
                 List<float> list = new List<float>();
                 if (jsonFrequencies.ContainsKey("default")) {
-                    object o = ((JValue) jsonFrequencies.GetValue("default")).Value;
+                    object? o = (jsonFrequencies.GetValue("default") as JValue)?.Value;
                     if (o is string) {
                         defaultAlleleName = (string) o;
                     }
