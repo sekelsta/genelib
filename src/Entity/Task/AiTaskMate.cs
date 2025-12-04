@@ -28,7 +28,7 @@ namespace Genelib {
             bool result = base.ContinueExecute(dt);
             // Optimization here: Base function runs logic equivalent to TargetReached() and includes it in result
             if (!result && TargetReached()) {
-                GeneticMultiply multiply = entity.GetBehavior<GeneticMultiply>();
+                GeneticMultiply? multiply = entity.GetBehavior<GeneticMultiply>();
                 if (multiply != null) {
                     multiply.MateWith(targetEntity);
                 }

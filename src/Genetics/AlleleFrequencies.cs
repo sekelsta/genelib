@@ -6,6 +6,8 @@ using Vintagestory.API.Datastructures;
 
 using Genelib.Extensions;
 
+#nullable disable
+
 namespace Genelib {
     public class AlleleFrequencies {
         public GenomeType ForType { get; private set; }

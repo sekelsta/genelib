@@ -11,13 +11,13 @@ using Vintagestory.GameContent;
 
 namespace Genelib.Extensions {
     public static class VSExtensions {
-        public static Entity GetEntityByUID(this IWorldAccessor world, long id) {
+        public static Entity? GetEntityByUID(this IWorldAccessor world, long id) {
             Entity entityById = world.GetEntityById(id);
             if (entityById != null) {
                 return entityById;
             }
-            ICollection<Entity> loadedEntities = null;
-            IServerWorldAccessor serverWorld = world as IServerWorldAccessor;
+            ICollection<Entity>? loadedEntities = null;
+            IServerWorldAccessor? serverWorld = world as IServerWorldAccessor;
             if (serverWorld == null) {
                 loadedEntities = (world as IClientWorldAccessor)?.LoadedEntities.Values;
             }
@@ -35,7 +35,7 @@ namespace Genelib.Extensions {
             return null;
         }
 
-        public static GenomeType GetGenomeType(this EntityProperties entityType) {
+        public static GenomeType? GetGenomeType(this EntityProperties entityType) {
             JsonObject[] jsonBehaviors = entityType.Server.BehaviorsAsJsonObj;
             for (int i = 0; i < jsonBehaviors.Length; ++i) {
                 string code = jsonBehaviors[i]["code"].AsString();
@@ -91,13 +91,13 @@ namespace Genelib.Extensions {
             return time.ToString().TrimEnd();
         }
 
-        public static AnimationMetaData TryGetAnimation(this JsonObject json, string key) {
+        public static AnimationMetaData? TryGetAnimation(this JsonObject json, string key) {
             return TryGetAnimation(json, key, key + "Speed");
         }
 
-        public static AnimationMetaData TryGetAnimation(this JsonObject json, string key, string speedKey) {
+        public static AnimationMetaData? TryGetAnimation(this JsonObject json, string key, string speedKey) {
             if (json[key].Exists) {
-                string name = json[key].AsString()?.ToLowerInvariant();
+                string? name = json[key].AsString()?.ToLowerInvariant();
                 return new AnimationMetaData() {
                     Code = name,
                     Animation = name,

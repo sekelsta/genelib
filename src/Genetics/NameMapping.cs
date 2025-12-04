@@ -1,5 +1,6 @@
 using ProtoBuf;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Genelib {
@@ -45,6 +46,8 @@ namespace Genelib {
         public NameMapping() {
             geneArray = new string[0];
             alleleArrays = new string[0][];
+            geneMap = null!;
+            alleleMaps = null!;
         }
 
         public NameMapping(string[] geneArray, string[][] alleleArrays) {
@@ -54,6 +57,8 @@ namespace Genelib {
         }
 
         [ProtoAfterDeserialization]
+        [MemberNotNull(nameof(geneMap))]
+        [MemberNotNull(nameof(alleleMaps))]
         private void InitializeMaps() {
             geneMap = new Dictionary<string, int>();
             alleleMaps = new Dictionary<string, byte>[geneArray.Length];
@@ -70,6 +75,6 @@ namespace Genelib {
     [ProtoContract]
     public class ProtoArrayString {
         [ProtoMember(1)]
-        public string[] array;
+        public required string[] array;
     }
 }

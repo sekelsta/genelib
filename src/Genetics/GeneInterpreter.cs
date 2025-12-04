@@ -31,7 +31,7 @@ namespace Genelib {
         // Called on first spawn or when an entity is born, after genome is finalized
         void Interpret(EntityBehaviorGenetics genetics);
 
-        ITexPositionSource GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
+        ITexPositionSource? GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
             return null;
         }
     }

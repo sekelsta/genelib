@@ -23,11 +23,11 @@ namespace Genelib
         public static bool AutoadjustAnimalBehaviors = false;
 
         public static readonly string modid = "genelib";
-        public static AssetCategory genetics = null;
+        public static AssetCategory genetics = null!;
 
-        internal static ICoreServerAPI ServerAPI { get; private set; }
-        internal static ICoreClientAPI ClientAPI { get; private set; }
-        internal static ICoreAPI API => (ICoreAPI)ServerAPI ?? (ICoreAPI)ClientAPI;
+        internal static ICoreServerAPI? ServerAPI { get; private set; }
+        internal static ICoreClientAPI? ClientAPI { get; private set; }
+        internal static ICoreAPI API => (ICoreAPI?)ServerAPI ?? (ICoreAPI?)ClientAPI!;
 
         private static Harmony harmony = new Harmony("sekelsta.genelib");
 
@@ -163,11 +163,11 @@ namespace Genelib
             }
             GenomeTypesMessage message = new GenomeTypesMessage(GenomeType.loaded);
 
-            ServerAPI.Network.GetChannel("genelib").SendPacket<GenomeTypesMessage>(message, player);
+            ServerAPI!.Network.GetChannel("genelib").SendPacket<GenomeTypesMessage>(message, player);
         }
 
         public static void WaitForGenomeAssets() {
-            if (ClientAPI.IsSinglePlayer) {
+            if (ClientAPI!.IsSinglePlayer) {
                 GenomeType.assetsReceived = true;
             }
             for (int tries = 0; tries < 10; ++tries) {
@@ -201,13 +201,13 @@ namespace Genelib
 
             if (multiplyIndex != -1) {
                 JObject multiplyJson = (JObject)(behaviors[multiplyIndex].Token);
-                multiplyJson.Property("code").Value = new JValue(GeneticMultiply.Code);
+                multiplyJson.Property("code")!.Value = new JValue(GeneticMultiply.Code);
             }
 
             // Might have to also merge multiply commonconfig with genelib.multiply's for future mod compat
 
             if (commonConfigs != null && !commonGeneticMultiply) {
-                commonConfigs.Remove("multiply", out JsonObject multiplyConfig);
+                commonConfigs.Remove("multiply", out JsonObject? multiplyConfig);
                 if (multiplyConfig != null) {
                     commonConfigs.Add(GeneticMultiply.Code, multiplyConfig);
                 }

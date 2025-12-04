@@ -5,8 +5,6 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Genelib.Extensions;
 
-#nullable enable
-
 namespace Genelib {
     public class ItemGeneticEgg : Item {
         public override int GetMergableQuantity(ItemStack sinkStack, ItemStack sourceStack, EnumMergePriority priority) {

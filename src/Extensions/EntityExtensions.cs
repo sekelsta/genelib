@@ -13,7 +13,7 @@ namespace Genelib.Extensions {
         }
 
         public static string GetDisplayName(this Entity entity) {
-            string name = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+            string? name = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (name == null || name == "") {
                 return entity.GetName();
             }
@@ -35,7 +35,7 @@ namespace Genelib.Extensions {
                 entity.WatchedAttributes.RemoveAttribute("fosterName");
                 entity.WatchedAttributes.RemoveAttribute("fosterKey");
             }
-            string motherName = foster.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+            string? motherName = foster.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (motherName != null && motherName != "") {
                 entity.WatchedAttributes.SetString(prefix+"Name", motherName);
             }
@@ -88,8 +88,8 @@ namespace Genelib.Extensions {
             return player != null && entity.WatchedAttributes.GetTreeAttribute("ownedby")?.GetString("uid") == player.PlayerUID;
         }
 
-        public static bool OwnedByOther(this Entity entity, IPlayer player) {
-            string ownerUID = entity.WatchedAttributes.GetTreeAttribute("ownedby")?.GetString("uid");
+        public static bool OwnedByOther(this Entity entity, IPlayer? player) {
+            string? ownerUID = entity.WatchedAttributes.GetTreeAttribute("ownedby")?.GetString("uid");
             return ownerUID != null && ownerUID != player?.PlayerUID;
         }
     }

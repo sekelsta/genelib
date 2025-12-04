@@ -2,6 +2,8 @@ using Genelib.Extensions;
 using System;
 using Vintagestory.API.Datastructures;
 
+#nullable disable
+
 namespace Genelib {
     public class Genome {
         public GenomeType Type  { get; private set; }
