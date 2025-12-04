@@ -35,7 +35,7 @@ namespace Genelib {
         [ProtoMember(4)]
         public SexDetermination SexDetermination { get; protected set; } = SexDetermination.XY;
 
-        private AlleleFrequencies defaultFrequencies;
+        private AlleleFrequencies? defaultFrequencies;
         public AlleleFrequencies DefaultFrequencies {
             get {
                 if (defaultFrequencies == null) {
@@ -58,6 +58,7 @@ namespace Genelib {
         }
 
         public GenomeType() {
+            Name = "uninitialized";
             Autosomal = new NameMapping();
             XZ = new NameMapping();
             YW = new NameMapping();
@@ -118,7 +119,7 @@ namespace Genelib {
             return initializers[name];
         }
 
-        public GeneInitializer ChooseInitializer(string[] initializerNames, ClimateCondition climate, int y, Random random) {
+        public GeneInitializer? ChooseInitializer(string[]? initializerNames, ClimateCondition climate, int y, Random random) {
             List<GeneInitializer> valid = new List<GeneInitializer>();
             // If no list provided, default to all being valid
             if (initializerNames == null) {

@@ -18,8 +18,8 @@ namespace Genelib {
         public int Width = 300;
 
         public delegate void AddToContents(GuiDialogAnimal gui, ref int y);
-        public static AddToContents AddToStatusContents;
-        public static AddToContents AddPreInfoContents;
+        public static AddToContents? AddToStatusContents;
+        public static AddToContents? AddPreInfoContents;
 
         public GuiDialogAnimal(ICoreClientAPI capi, EntityAgent animal) : base(capi) {
             this.Animal = animal;
@@ -40,14 +40,16 @@ namespace Genelib {
             ElementBounds tabBounds = ElementBounds.Fixed(0, -24, Width, 25);
             CairoFont tabFont = CairoFont.WhiteDetailText();
 
-            string animalName = Animal.GetBehavior<EntityBehaviorNameTag>().DisplayName;
+            EntityBehaviorNameTag? nameTag = Animal.GetBehavior<EntityBehaviorNameTag>();
+            ArgumentNullException.ThrowIfNull(nameTag);
+            string animalName = nameTag.DisplayName;
             SingleComposer = capi.Gui.CreateCompo("animaldialog-" + Animal.EntityId, dialogBounds)
                 .AddShadedDialogBG(bgBounds, true)
                 .AddDialogTitleBar("", () => { TryClose(); } )
                 .AddHorizontalTabs(tabs, tabBounds, OnTabClicked, tabFont, tabFont.Clone().WithColor(GuiStyle.ActiveButtonTextColor), "tabs")
                 .BeginChildElements(bgBounds);
 
-            if (Animal.OwnedByOther((GenelibSystem.ClientAPI.World as ClientMain)?.Player)) {
+            if (Animal.OwnedByOther((capi.World as ClientMain)?.Player)) {
                 SingleComposer.AddStaticText(animalName, CairoFont.WhiteSmallishText(), ElementBounds.Fixed(0, -14, 200, 22));
             }
             else {
@@ -67,23 +69,23 @@ namespace Genelib {
 
         private void OnNameSet(string name) {
             SetNameMessage message = new SetNameMessage() { entityId = Animal.EntityId, name = name };
-            GenelibSystem.ClientAPI.Network.GetChannel("genelib").SendPacket<SetNameMessage>(message);
+            capi.Network.GetChannel("genelib").SendPacket<SetNameMessage>(message);
         }
 
         private void OnNoteSet(string note) {
             SetNoteMessage message = new SetNoteMessage() { entityId = Animal.EntityId, note = note };
-            GenelibSystem.ClientAPI.Network.GetChannel("genelib").SendPacket<SetNoteMessage>(message);
+            capi.Network.GetChannel("genelib").SendPacket<SetNoteMessage>(message);
         }
 
         private void OnPreventBreedingSet(bool value) {
             ToggleBreedingMessage message = new ToggleBreedingMessage() { entityId = Animal.EntityId, preventBreeding = value };
-            GenelibSystem.ClientAPI.Network.GetChannel("genelib").SendPacket<ToggleBreedingMessage>(message);
+            capi.Network.GetChannel("genelib").SendPacket<ToggleBreedingMessage>(message);
         }
 
         protected void AddStatusContents() {
             int y = 25;
             if (!Animal.WatchedAttributes.GetBool("neutered", false)) {
-                if (Animal.OwnedByOther((GenelibSystem.ClientAPI.World as ClientMain)?.Player)) {
+                if (Animal.OwnedByOther((capi.World as ClientMain)?.Player)) {
                     if (!Animal.MatingAllowed()) {
                         SingleComposer.AddStaticText(Lang.Get("genelib:gui-animalinfo-breedingprevented"), CairoFont.WhiteDetailText(), ElementBounds.Fixed(0, y, Width, 25));
                         y += 25;
@@ -145,8 +147,8 @@ namespace Genelib {
 
             SingleComposer.AddStaticText(Lang.Get("genelib:gui-animalinfo-note"), infoFont, ElementBounds.Fixed(0, y, Width, 25));
             y += 25;
-            string note = Animal.GetBehavior<BehaviorAnimalInfo>().Note;
-            if (Animal.OwnedByOther((GenelibSystem.ClientAPI.World as ClientMain)?.Player)) {
+            string note = Animal.GetBehavior<BehaviorAnimalInfo>()!.Note;
+            if (Animal.OwnedByOther((capi.World as ClientMain)?.Player)) {
                 SingleComposer.AddStaticText(note, CairoFont.WhiteDetailText(), ElementBounds.Fixed(0, y, Width - 20, 22));
             }
             else {
@@ -184,6 +186,6 @@ namespace Genelib {
             ComposeGui();
         }
 
-        public override string ToggleKeyCombinationCode => null;
+        public override string? ToggleKeyCombinationCode => null;
     }
 }

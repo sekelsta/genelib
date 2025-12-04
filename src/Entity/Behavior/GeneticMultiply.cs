@@ -55,7 +55,7 @@ namespace Genelib {
         protected double BreedingSeasonBefore;
         protected double BreedingSeasonAfter;
 
-        protected TreeArrayAttribute Litter {
+        protected TreeArrayAttribute? Litter {
             get => multiplyTree["litter"] as TreeArrayAttribute;
             set { 
                 multiplyTree["litter"] = value;
@@ -91,14 +91,14 @@ namespace Genelib {
         protected override void CheckMultiply(float dt)
         {
             // Deliberately skip call to base.CheckMultiply
-            FieldInfo callbackField = typeof(EntityBehaviorMultiply).GetField("callbackId", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo? callbackField = typeof(EntityBehaviorMultiply).GetField("callbackId", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (!entity.Alive) {
-                callbackField.SetValue(this, 0);
+                callbackField?.SetValue(this, 0);
                 return;
             }
 
-            callbackField.SetValue(this, entity.World.RegisterCallback(CheckMultiply, 3000));
+            callbackField?.SetValue(this, entity.World.RegisterCallback(CheckMultiply, 3000));
 
             if (entity.World.Calendar == null) return;
 
@@ -111,8 +111,12 @@ namespace Genelib {
 
             if (InEarlyPregnancy) {
                 if (entity.World.Calendar.TotalDays > TotalDaysPregnancyStart + PregnancyDays * ViabilityCheckDelay) {
-                    EntityBehaviorGenetics gb = entity.GetBehavior<EntityBehaviorGenetics>();
+                    EntityBehaviorGenetics? gb = entity.GetBehavior<EntityBehaviorGenetics>();
                     if (gb != null) {
+                        if (Litter == null) {
+                            SetNotPregnant();
+                            return;
+                        }
                         List<TreeAttribute> surviving = new List<TreeAttribute>();
                         foreach (TreeAttribute childTree in Litter.value) {
                             if (childTree.GetBool("viable", true) == false) continue;
@@ -162,12 +166,12 @@ namespace Genelib {
                 return false;
             }
 
-            Entity sire = GetRequiredEntityNearby();
+            Entity? sire = GetRequiredEntityNearby();
             if (sire == null && RequiresNearbyEntityCodes.Length > 0) return false;
             // If no required nearby entity code, then self-fertilize
             sire ??= entity;
 
-            EntityBehaviorTaskAI taskAi = entity.GetBehavior<EntityBehaviorTaskAI>();
+            EntityBehaviorTaskAI? taskAi = entity.GetBehavior<EntityBehaviorTaskAI>();
             if (taskAi == null) {
                 MateWith(sire);
                 return true;
@@ -177,7 +181,7 @@ namespace Genelib {
                 return false;
             }
 
-            EntityBehaviorTaskAI sireTaskAi = sire.GetBehavior<EntityBehaviorTaskAI>();
+            EntityBehaviorTaskAI? sireTaskAi = sire.GetBehavior<EntityBehaviorTaskAI>();
             if (sireTaskAi == null) {
                 MateWith(sire);
                 return true;
@@ -215,7 +219,7 @@ namespace Genelib {
         }
 
         // Based on a copy-paste from EntityBehaviorMultiply of VSEssentialsMod
-        protected override Entity GetRequiredEntityNearby() {
+        protected override Entity? GetRequiredEntityNearby() {
             if (RequiresNearbyEntityCodes.Length == 0) {
                 return null;
             }
@@ -244,7 +248,7 @@ namespace Genelib {
             return ChooseAvoidingCloseRelatives(entity, entities);
         }
 
-        public static Entity ChooseAvoidingCloseRelatives(Entity entity, Entity[] entities) {
+        public static Entity? ChooseAvoidingCloseRelatives(Entity entity, Entity[]? entities) {
             if (entities == null || entities.Length == 0) {
                 return null;
             }
@@ -292,6 +296,7 @@ namespace Genelib {
         }
 
         public virtual void MateWith(Entity sire) {
+            ArgumentNullException.ThrowIfNull(sire);
             ITreeAttribute tree = entity.WatchedAttributes.GetTreeAttribute("hunger");
             float saturation = tree?.GetFloat("saturation", 0) ?? 0;
             if (entity.World.Rand.NextDouble() > MatingSuccessChance) {
@@ -300,7 +305,7 @@ namespace Genelib {
             }
             tree?.SetFloat("saturation", saturation - PortionsEatenForMultiply);
 
-            if (sire != null)
+            if (sire != entity)
             {
                 ITreeAttribute maletree = sire.WatchedAttributes.GetTreeAttribute("hunger");
                 if (maletree != null)
@@ -310,8 +315,8 @@ namespace Genelib {
                 }
             }
 
-            Genome sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
-            Genome ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            Genome? sireGenome = sire.GetBehavior<EntityBehaviorGenetics>()?.Genome;
+            Genome? ourGenome = entity.GetBehavior<EntityBehaviorGenetics>()?.Genome;
             int litterSize = ChooseLitterSize();
 
             List<TreeAttribute> litter = new List<TreeAttribute>();
@@ -376,20 +381,22 @@ namespace Genelib {
 
         protected override void GiveBirth(float q) {
             int nextGeneration = entity.WatchedAttributes.GetInt("generation", 0) + 1;
-            TreeAttribute[] litterData = Litter?.value;
-            foreach (TreeAttribute childData in litterData) {
-                Entity spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
+            TreeAttribute[]? litterData = Litter?.value;
+            if (litterData != null) {
+                foreach (TreeAttribute childData in litterData) {
+                    Entity? spawn = SpawnNewborn(entity.World, entity.Pos, entity, nextGeneration, childData);
+                }
             }
             SetNotPregnant();
             TotalDaysLastBirth = entity.World.Calendar.TotalDays;
             TotalDaysCooldownUntil = entity.World.Calendar.TotalDays + MultiplyCooldownDaysMin + entity.World.Rand.NextDouble() * (MultiplyCooldownDaysMax - MultiplyCooldownDaysMin);
         }
 
-        public static Entity SpawnNewborn(IWorldAccessor world, EntityPos pos, Entity foster, int nextGeneration, TreeAttribute childData) {
+        public static Entity? SpawnNewborn(IWorldAccessor world, EntityPos pos, Entity foster, int nextGeneration, TreeAttribute childData) {
             if (world.Side != EnumAppSide.Server) return null;
 
             AssetLocation spawnCode = new AssetLocation(childData.GetString("code"));
-            if (((IServerWorldAccessor)world).RemappedEntities.TryGetValue(spawnCode, out string remap))
+            if (((IServerWorldAccessor)world).RemappedEntities.TryGetValue(spawnCode, out string? remap))
             {
                 spawnCode = remap;
             }
@@ -430,7 +437,7 @@ namespace Genelib {
             return false;
         }
 
-        public virtual ItemStack LayEgg() {
+        public virtual ItemStack? LayEgg() {
             // Not implemented
             return null;
         }

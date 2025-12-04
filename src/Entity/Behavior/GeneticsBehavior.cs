@@ -21,12 +21,15 @@ namespace Genelib {
                 GenomeModified();
             }
         }
-        protected string[] initializers;
+        protected string[]? initializers;
         protected AlleleFrequencies defaultFrequencies;
 
         public EntityBehaviorGenetics(Entity entity)
           : base(entity)
         {
+            genome = null!;
+            GenomeType = null!;
+            defaultFrequencies = null!;
         }
 
         public override void Initialize(EntityProperties properties, JsonObject attributes) {
@@ -47,7 +50,7 @@ namespace Genelib {
             }
         }
 
-        private string[] arrayOrNull(string s) {
+        private string[]? arrayOrNull(string s) {
             if (s == null) {
                 return null;
             }
@@ -59,10 +62,10 @@ namespace Genelib {
                 if (Genome == null) {
                     Random random = entity.World.Rand;
                     bool heterogametic = GenomeType.SexDetermination.Heterogametic(entity.IsMale());
-                    AlleleFrequencies frequencies = null;
+                    AlleleFrequencies? frequencies = null;
                     BlockPos blockPos = entity.Pos.AsBlockPos;
                     ClimateCondition climate = entity.Api.World.BlockAccessor.GetClimateAt(blockPos);
-                    frequencies = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random).Frequencies
+                    frequencies = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random)?.Frequencies
                         ?? defaultFrequencies;
                     Genome = new Genome(frequencies, heterogametic, random);
                     Genome.Mutate(GenelibConfig.MutationRate, random);
@@ -93,8 +96,8 @@ namespace Genelib {
             entity.WatchedAttributes.MarkPathDirty("genetics");
         }
 
-        public override ITexPositionSource GetTextureSource(ref EnumHandling handling) {
-            ITexPositionSource source = null;
+        public override ITexPositionSource? GetTextureSource(ref EnumHandling handling) {
+            ITexPositionSource? source = null;
             foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
                 source = interpreter.GetTextureSource(this, ref handling);
                 if (handling == EnumHandling.PreventSubsequent) {

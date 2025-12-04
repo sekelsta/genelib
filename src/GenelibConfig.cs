@@ -3,7 +3,7 @@ using Vintagestory.API.Common;
 
 namespace Genelib {
     public class GenelibConfig {
-        public static GenelibConfig Instance = null;
+        public static GenelibConfig Instance = null!;
 
         public static double MutationRate = 0.00004;
 
