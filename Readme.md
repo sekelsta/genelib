@@ -43,15 +43,19 @@ To get genetics to work right, you will have to add a few specific EntityBehavio
 
 "genelib.genetics": For having genes, what a shocker. Specify "genomeType" here. Required serverside. Optionally can be included clientside, if you have a gene interpreter that should run on the client.
 
-"genelib.multiply" replacing "multiply": Allows the entity to create offspring who inherit genes from both parents. Again the main affects are serverside, that's where the data goes, and clientside you just need it to show the player the info text.
+(see note on autoadjustment) "genelib.multiply" replacing "multiply": Allows the entity to create offspring who inherit genes from both parents. Again the main affects are serverside, that's where the data goes, and clientside you just need it to show the player the info text.
 
-"genelib.info", optional: Allows the player to open an info GUI for the animal by looking at it and pressing 'N'. This allows them to name the animal and view its parentage. Also provides a "Prevent breeding" checkbox which only works if that species's females use the "genelib.multiply" behavior instead of vanilla "multiply". This inherits from the nametag behavior, so you'll probably want to use it as `{ code: "genelib.info", showtagonlywhentargeted: true }`.
+(see note on autoadjustment) "genelib.info", optional: Allows the player to open an info GUI for the animal by looking at it and pressing 'N'. This allows them to name the animal and view its parentage. Also provides a "Prevent breeding" checkbox which only works if that species's females use the "genelib.multiply" behavior instead of vanilla "multiply". This inherits from the nametag behavior, so you'll probably want to use it as `{ code: "genelib.info", showtagonlywhentargeted: true }`.
 
 This library does not provide support for genetics on egg-laying species. Those features are still provided by [Detailed Animals](https://github.com/sekelsta/detailedanimals) instead.
 
 Aside from EntityBehaviors, if you have any sex-linked genes you should also add male:true/false to the entity's attributes to specify, for example, that roosters are male and hens are female. For convenience, if you leave this out it will take a guess based on the entity code + variant groups - if the whole thing contains the string "-female" it will be treated as female, otherwise as male.
 
-Note: "genelib.grow" is deprecated. Gene passing from baby to adult is handled via Harmony patching the vanilla grow.
+Note on autoadjustment:
+Code mods can ask this library to automatically replace multiply with `genelib.multiply` and add `genelib.info` for all animals, that is, entities with the animal tag. (Note this targets `multiply` specifically and not the `multiplybase` used by birds - so birds still need manual setup.)
+To trigger the automatic replacement, set `GenelibSystem.AutoadjustAnimalBehaviors` to `true`. This requires either a compile-time dependency on the mod (easier) or reflection (more annoying).
+
+From older versions: "genelib.grow" is deprecated as of version 2.0 for VS 1.21. Gene passing from baby to adult is handled via Harmony patching the vanilla grow.
 
 ### Seasonal animal breeding
 Entities using `genelib.multiply` can configure it to have more realistic timing of the breeding if the `seasonalbreeding` is installed. Supported options include:
