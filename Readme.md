@@ -43,8 +43,6 @@ To get genetics to work right, you will have to add a few specific EntityBehavio
 
 "genelib.genetics": For having genes, what a shocker. Specify "genomeType" here. Required serverside. Optionally can be included clientside, if you have a gene interpreter that should run on the client.
 
-"genelib.grow" replacing "grow": Makes baby animals keep their genes when they grow up.
-
 "genelib.multiply" replacing "multiply": Allows the entity to create offspring who inherit genes from both parents. Again the main affects are serverside, that's where the data goes, and clientside you just need it to show the player the info text.
 
 "genelib.info", optional: Allows the player to open an info GUI for the animal by looking at it and pressing 'N'. This allows them to name the animal and view its parentage. Also provides a "Prevent breeding" checkbox which only works if that species's females use the "genelib.multiply" behavior instead of vanilla "multiply". This inherits from the nametag behavior, so you'll probably want to use it as `{ code: "genelib.info", showtagonlywhentargeted: true }`.
@@ -52,6 +50,8 @@ To get genetics to work right, you will have to add a few specific EntityBehavio
 This library does not provide support for genetics on egg-laying species. Those features are still provided by [Detailed Animals](https://github.com/sekelsta/detailedanimals) instead.
 
 Aside from EntityBehaviors, if you have any sex-linked genes you should also add male:true/false to the entity's attributes to specify, for example, that roosters are male and hens are female. For convenience, if you leave this out it will take a guess based on the entity code + variant groups - if the whole thing contains the string "-female" it will be treated as female, otherwise as male.
+
+Note: "genelib.grow" is deprecated. Gene passing from baby to adult is handled via Harmony patching the vanilla grow.
 
 ### Seasonal animal breeding
 Entities using `genelib.multiply` can configure it to have more realistic timing of the breeding if the `seasonalbreeding` is installed. Supported options include:
