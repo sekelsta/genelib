@@ -56,9 +56,24 @@ namespace Genelib {
             if (nametag == null || target.OwnedByOther(fromPlayer)) {
                 return;
             }
-            target.Api.Logger.Audit(fromPlayer.PlayerName + " changed name of " + target.Code + " ID " + target.EntityId + " at " + target.Pos.XYZ.AsBlockPos 
-                + " from " + nametag.DisplayName + " to " + message.name);
-            nametag.SetName(message.name);
+            string newName = message.name;
+            target.Api.Logger.Audit(fromPlayer.PlayerName + " changed name of " + target.Code + " ID " + target.EntityId + " at " + target.Pos.XYZ.AsBlockPos
+                + " from " + nametag.DisplayName + " to " + newName);
+            nametag.SetName(newName);
+
+            // Update stored parent name on all offspring
+            long renamedUID = target.UniqueID();
+            foreach (Entity entity in GenelibSystem.ServerAPI.World.LoadedEntities.Values) {
+                if (entity.WatchedAttributes.GetLong("motherId", -1) == renamedUID) {
+                    entity.WatchedAttributes.SetString("motherName", newName);
+                }
+                if (entity.WatchedAttributes.GetLong("fatherId", -1) == renamedUID) {
+                    entity.WatchedAttributes.SetString("fatherName", newName);
+                }
+                if (entity.WatchedAttributes.GetLong("fosterId", -1) == renamedUID) {
+                    entity.WatchedAttributes.SetString("fosterName", newName);
+                }
+            }
         }
 
         public static void OnSetNoteMessageServer(IServerPlayer fromPlayer, SetNoteMessage message) {
