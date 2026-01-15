@@ -12,7 +12,6 @@ namespace Genelib {
         public byte[,] Autosomal { get; protected set; }
         public byte[,] Anonymous { get; protected set; }
         public byte[,] XZ { get; protected set; }
-        public byte[,]? YW { get; protected set; }
         // A compact way to store numerous genes each with only 2 possible alleles
         // Format: Basic layout similar to autosomal genes (gene copies grouped), but compressed down to where each allele is only 1 bit.
         // Across the bytes in the array the order is as you'd expect, starting at index 0 and increasing.
@@ -88,41 +87,12 @@ namespace Genelib {
             return result;
         }
 
-        // Checks if any allele matches any of the given alleles, for a gene on the Y or W chromosome
-        [MemberNotNull(nameof(YW))]
-        public bool HasHeterogametic(int gene, params byte[] alleles) {
-            ArgumentNullException.ThrowIfNull(YW);
-            bool result = false;
-            for (int n = 0; n < YW.GetLength(1); ++n) {
-                foreach (byte a in alleles) {
-                    result = result || YW[gene, n] == a;
-                }
-            }
-            return result;
-        }
-
-        // Checks if every allele matches at least one of the given alleles, for a gene on the Y or W chromosome
-        [MemberNotNull(nameof(YW))]
-        public bool HasOnlyHeterogametic(int gene, params byte[] alleles) {
-            ArgumentNullException.ThrowIfNull(YW);
-            bool result = true;
-            for (int n = 0; n < YW.GetLength(1); ++n) {
-                bool matches = false;
-                foreach (byte a in alleles) {
-                    matches = matches || YW[gene, n] == a;
-                }
-                result = result && matches;
-            }
-            return result;
-        }
-
         public bool IsHomogametic() {
             return XZ.GetLength(1) == Ploidy;
         }
 
-        [MemberNotNullWhen(true, nameof(YW))]
         public bool IsHeterogametic() {
-            return YW is not null;
+            return !IsHomogametic();
         }
 
         public int BitwiseSum(Range range) {
@@ -215,18 +185,6 @@ namespace Genelib {
             return HasOnlySexlinked(geneID, alleles.Select(allele => Type.XZ.AlleleID(geneID, allele)).ToArray());
         }
 
-        [MemberNotNull(nameof(YW))]
-        public bool HasHeterogametic(string gene, params string[] alleles) {
-            int geneID = Type.YW.GeneID(gene);
-            return HasHeterogametic(geneID, alleles.Select(allele => Type.YW.AlleleID(geneID, allele)).ToArray());
-        }
-
-        [MemberNotNull(nameof(YW))]
-        public bool HasOnlyHeterogametic(string gene, params string[] alleles) {
-            int geneID = Type.YW.GeneID(gene);
-            return HasOnlyHeterogametic(geneID, alleles.Select(allele => Type.YW.AlleleID(geneID, allele)).ToArray());
-        }
-
         public void SetAutosomal(string gene, int n, string allele) {
             int geneID = Type.Autosomal.GeneID(gene);
             byte alleleID = Type.Autosomal.AlleleID(geneID, allele);
@@ -315,13 +273,6 @@ namespace Genelib {
 
             if (heterogametic) {
                 XZ = new byte[Type.XZ.GeneCount, Ploidy/2];
-                YW = new byte[Type.YW.GeneCount, Ploidy/2];
-
-                for (int gene = 0; gene < Type.YW.GeneCount; ++gene) {
-                    for (int n = 0; n < YW.GetLength(1); ++n) {
-                        YW[gene, n] = getRandomAllele(frequencies.YW?[gene], random);
-                    }
-                }
             }
             else {
                 XZ = new byte[Type.XZ.GeneCount, Ploidy];
@@ -365,7 +316,6 @@ namespace Genelib {
             if (this.IsHeterogametic()) {
                 if (heterogametic) {
                     gamete.XZ = new byte[Type.XZ.GeneCount, 0];
-                    gamete.YW = (byte[,])this.YW!.Clone();
                 }
                 else {
                     gamete.XZ = (byte[,])this.XZ.Clone();
@@ -406,7 +356,6 @@ namespace Genelib {
 
             zygote.XZ = new byte[Type.XZ.GeneCount, this.XZ.GetLength(1) + other.XZ.GetLength(1)];
             JoinGenes(zygote.XZ, this.XZ, other.XZ);
-            zygote.YW = this.YW ?? other.YW;
             return zygote;
         }
 
@@ -464,15 +413,6 @@ namespace Genelib {
                     }
                 }
             }
-            if (YW != null) {
-                for (int gene = 0; gene < Type.YW.GeneCount; ++gene) {
-                    for (int n = 0; n < YW.GetLength(1); ++n) {
-                        if (random.NextDouble() < p) {
-                            YW[gene, n] = (byte) random.Next(Type.YW.AlleleCount(gene));
-                        }
-                    }
-                }
-            }
             return this;
         }
 
@@ -506,7 +446,6 @@ namespace Genelib {
             this.Anonymous = atLeastSize(Anonymous, Type.Anonymous.GeneCount);
             this.Bitwise = atLeastSize(Bitwise, (int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0));
             this.XZ = atLeastSize(XZ, Type.XZ.GeneCount);
-            this.YW = YW != null ? atLeastSize(YW, Type.YW.GeneCount) : null; // Keep null if it started null
             if (moveCoiGenes) {
                 byte[,] oldAnonymous = Anonymous;
                 Anonymous = new Byte[Type.Anonymous.GeneCount, 2];
@@ -553,8 +492,8 @@ namespace Genelib {
                 }
             }
 
-            YW = (geneticsTree.GetAttribute("yw") as ByteArray2DAttribute)?.value;
-            XZ ??= new byte[0, YW == null ? Ploidy : Ploidy/2]; // Need to set correct ploidy for it here, then length gets handled by UpdateForType
+            // TODO: Need to know whether it should be heterogametic
+            XZ ??= new byte[0, Ploidy/2]; // Need to set correct ploidy for it here, then length gets handled by UpdateForType
             UpdateForType();
             // Just to make the compiler happy about nullability. Should never happen unless someone overrides UpdateForType to do something dumb
             ArgumentNullException.ThrowIfNull(Autosomal);
@@ -583,19 +522,12 @@ namespace Genelib {
             }
             // Set XZ regardless of whetehr the length is 0 or not
             geneticsTree.SetAttribute("xz", new ByteArray2DAttribute(XZ));
-            if (YW == null) {
-                geneticsTree.RemoveAttribute("yw");
-            }
-            else {
-                geneticsTree.SetAttribute("yw", new ByteArray2DAttribute(YW));
-            }
         }
 
         public override string ToString() {
             return "Genome << type:" + Type.Name 
                 + ",\n    autosomal=" + Autosomal.ArrayToString() 
                 + ",\n    xz=" + XZ.ArrayToString() 
-                + ",\n    yw=" + YW?.ArrayToString() 
                 + ",\n    anonymous=" + Anonymous.ArrayToString()
                 + ",\n    bitwise=" + Bitwise.ArrayToString() + " >>";
         }

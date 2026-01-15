@@ -63,7 +63,6 @@ namespace Genelib {
             Name = "uninitialized";
             Autosomal = new NameMapping();
             XZ = new NameMapping();
-            YW = new NameMapping();
             Anonymous = new NameGroupMapping();
             Bitwise = new NameGroupMapping();
             Interpreters = new GeneInterpreter[0];
@@ -74,7 +73,6 @@ namespace Genelib {
             JsonObject genes = attributes["genes"];
             Autosomal = parse(genes["autosomal"]);
             XZ = parse(genes["xz"]);
-            YW = parse(genes["yw"]);
             Anonymous = parseGrouped(genes["anonymous"]);
             Bitwise = parseGrouped(genes["bitwise"]);
 
