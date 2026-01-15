@@ -12,7 +12,6 @@ namespace Genelib {
         public float[]?[]? Autosomal { get; protected set; }
         public float[]?[]? Bitwise { get; protected set; }
         public float[]?[]? XZ { get; protected set; }
-        public float[]?[]? YW { get; protected set; }
 
         public AlleleFrequencies(GenomeType type) {
             ForType = type;
@@ -23,8 +22,6 @@ namespace Genelib {
 
             JsonObject jsonXZ = json["xz"];
             XZ = parseFrequencies(jsonXZ.Exists ? jsonXZ : json["sexlinked"], type.XZ);
-
-            YW = parseFrequencies(json["yw"], type.YW);
 
             JsonObject jsonBitwise = json["bitwise"];
             if (jsonBitwise.Exists) {

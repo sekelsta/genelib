@@ -16,10 +16,10 @@ namespace Genelib.Test {
         {
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
 
-            string mammal = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], yw: [ { ylinked1: [\"a\", \"b\"] }, { ylinked2: [\"a\", \"b\"] }, ], anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, secondsies: {autosomal: { extension: { default: \"black\" }, tyrosinase: { default: \"white\" }, }, xz: { xlinked1: { default: \"b\" }, xlinked2: { default: \"b\" }, }, yw: { ylinked1: { default: \"b\" }, ylinked2: { default: \"b\" }, },} }}";
+            string mammal = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, secondsies: {autosomal: { extension: { default: \"black\" }, tyrosinase: { default: \"white\" }, }, xz: { xlinked1: { default: \"b\" }, xlinked2: { default: \"b\" }, } } }}";
             GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(mammal), "mammal", null));
 
-            string bird = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], yw: [ { ylinked1: [\"a\", \"b\"] }, { ylinked2: [\"a\", \"b\"] }, ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"zw\", initializers: { defaultinitializer: {} }}";
+            string bird = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"zw\", initializers: { defaultinitializer: {} }}";
             GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(bird), "bird", null));  
 
             // Note the probabilities in bitwise initializers are listed per gene in the group, with the final one being used for all remaining genes
@@ -36,7 +36,6 @@ namespace Genelib.Test {
             Assert.AreEqual(false, female.IsHeterogametic());
             Assert.NotNull(female.XZ, "Female mammal should have X chromosomes");
             Assert.AreEqual(2, female.XZ.GetLength(1), "Female mammal should have secondary X chromosome");
-            Assert.Null(female.YW, "Female mammal should not have Y chromosome");
 
             Assert.AreEqual(0, female.Type.Bitwise.TryGetRange("thisgenedoesnotexist").Start.Value);
             Assert.AreEqual(0, female.Type.Bitwise.TryGetRange("thisgenedoesnotexist").End.Value);
@@ -51,7 +50,6 @@ namespace Genelib.Test {
             Assert.AreEqual(true, male.IsHeterogametic());
             Assert.NotNull(male.XZ, "Male mammal should have X chromosome");
             Assert.AreEqual(1, male.XZ.GetLength(1), "Male mammal should not have secondary X chromosome");
-            Assert.NotNull(male.YW, "Male mammal should have Y chromosome");
         }
 
         [Test]
@@ -63,7 +61,6 @@ namespace Genelib.Test {
             Assert.AreEqual(true, female.IsHeterogametic());
             Assert.NotNull(female.XZ, "Female bird should have Z chromosome");
             Assert.AreEqual(1, female.XZ.GetLength(1), "Female bird should not have secondary Z chromosome");
-            Assert.NotNull(female.YW, "Female bird should have W chromosome");
         }
 
         [Test]
@@ -75,7 +72,6 @@ namespace Genelib.Test {
             Assert.AreEqual(false, male.IsHeterogametic());
             Assert.NotNull(male.XZ, "Male bird should have primary Z chromosome");
             Assert.AreEqual(2, male.XZ.GetLength(1), "Male bird should have secondary Z chromosome");
-            Assert.Null(male.YW, "Male bird should not have W chromosome");
         }
 
         [Test]
@@ -106,9 +102,6 @@ namespace Genelib.Test {
 
             Assert.AreEqual(0, son.XZ[0, 0]);
             Assert.AreEqual(0, son.XZ[1, 0]);
-            Assert.NotNull(son.YW);
-            Assert.AreEqual(1, son.YW![0, 0]);
-            Assert.AreEqual(1, son.YW![1, 0]);
 
             Assert.True(son.Anonymous[0, 0] == mother.Anonymous[0, 0] || son.Anonymous[0, 0] == mother.Anonymous[0, 1]);
         }
