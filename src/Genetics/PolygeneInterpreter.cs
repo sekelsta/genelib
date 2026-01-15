@@ -6,7 +6,7 @@ namespace Genelib {
     public class PolygeneInterpreter : GeneInterpreter {
         public string Name => "Polygenes";
 
-        void GeneInterpreter.FinalizeSpawn(Genome genome, AlleleFrequencies frequencies, Random random) {
+        void GeneInterpreter.FinalizeSpawn(Genome genome, GeneInitializer initializer, Random random) {
             Range range = genome.Type.Anonymous.TryGetRange("deleterious");
 
             for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
