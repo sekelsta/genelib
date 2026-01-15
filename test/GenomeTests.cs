@@ -31,7 +31,7 @@ namespace Genelib.Test {
         public void Genome_GenerateFemaleMammal()
         {
             GenomeType mammal = GenomeType.Get("mammal");
-            Genome female = new Genome(mammal.Initializer("defaultinitializer").Frequencies, false, new Random(SEED));
+            Genome female = new Genome(mammal.Initializer("defaultinitializer"), false, new Random(SEED));
 
             Assert.AreEqual(false, female.IsHeterogametic());
             Assert.NotNull(female.XZ, "Female mammal should have X chromosomes");
@@ -45,7 +45,7 @@ namespace Genelib.Test {
         public void Genome_GenerateMaleMammal()
         {
             GenomeType mammal = GenomeType.Get("mammal");
-            Genome male = new Genome(mammal.Initializer("defaultinitializer").Frequencies, true, new Random(SEED));
+            Genome male = new Genome(mammal.Initializer("defaultinitializer"), true, new Random(SEED));
 
             Assert.AreEqual(true, male.IsHeterogametic());
             Assert.NotNull(male.XZ, "Male mammal should have X chromosome");
@@ -56,7 +56,7 @@ namespace Genelib.Test {
         public void Genome_GenerateFemaleBird()
         {
             GenomeType bird = GenomeType.Get("bird");
-            Genome female = new Genome(bird.Initializer("defaultinitializer").Frequencies, true, new Random(SEED));
+            Genome female = new Genome(bird.Initializer("defaultinitializer"), true, new Random(SEED));
 
             Assert.AreEqual(true, female.IsHeterogametic());
             Assert.NotNull(female.XZ, "Female bird should have Z chromosome");
@@ -67,7 +67,7 @@ namespace Genelib.Test {
         public void Genome_GenerateMaleBird()
         {
             GenomeType bird = GenomeType.Get("bird");
-            Genome male = new Genome(bird.Initializer("defaultinitializer").Frequencies, false, new Random(SEED));
+            Genome male = new Genome(bird.Initializer("defaultinitializer"), false, new Random(SEED));
 
             Assert.AreEqual(false, male.IsHeterogametic());
             Assert.NotNull(male.XZ, "Male bird should have primary Z chromosome");
@@ -79,8 +79,8 @@ namespace Genelib.Test {
         {
             GenomeType mammal = GenomeType.Get("mammal");
             Random random = new Random(SEED);
-            Genome mother = new Genome(mammal.Initializer("defaultinitializer").Frequencies, false, random);
-            Genome father = new Genome(mammal.Initializer("secondsies").Frequencies, true, random);
+            Genome mother = new Genome(mammal.Initializer("defaultinitializer"), false, random);
+            Genome father = new Genome(mammal.Initializer("secondsies"), true, random);
 
             Genome daughter = Genome.Inherit(mother, father, false, random);
             Genome son = Genome.Inherit(mother, father, true, random);
@@ -111,7 +111,7 @@ namespace Genelib.Test {
         {
             GenomeType mammal = GenomeType.Get("mammal");
             Random random = new Random(SEED);
-            Genome genome = new Genome(mammal.Initializer("defaultinitializer").Frequencies, false, random);
+            Genome genome = new Genome(mammal.Initializer("defaultinitializer"), false, random);
             genome.Mutate(0.05, random);
         }
 
@@ -124,9 +124,9 @@ namespace Genelib.Test {
             Assert.AreEqual("strength", bitwise.Bitwise.GroupNames[1]);
 
             // Just check that we can initialize with an empty initializer without exceptions
-            Genome genome = new Genome(bitwise.Initializer("defaultinitializer").Frequencies, false, new Random(SEED));
+            Genome genome = new Genome(bitwise.Initializer("defaultinitializer"), false, new Random(SEED));
 
-            Genome zeros = new Genome(bitwise.Initializer("allzeros").Frequencies, false, new Random(SEED));
+            Genome zeros = new Genome(bitwise.Initializer("allzeros"), false, new Random(SEED));
             // All zeros - no bits set
             Assert.AreEqual(0, zeros.BitwiseSum("coi"));
             Assert.AreEqual(0, zeros.BitwiseSum("strength"));
@@ -145,7 +145,7 @@ namespace Genelib.Test {
             Assert.AreEqual(8, zeros.BitwiseHomozygotes("strength"));
 
 
-            Genome ones = new Genome(bitwise.Initializer("allones").Frequencies, false, new Random(SEED));
+            Genome ones = new Genome(bitwise.Initializer("allones"), false, new Random(SEED));
             // All ones - all bits set
             Assert.AreEqual(256, ones.BitwiseSum("coi")); // 128 * 2 (diploid)
             Assert.AreEqual(16, ones.BitwiseSum("strength")); // 8 * 2
@@ -166,7 +166,7 @@ namespace Genelib.Test {
             Assert.AreEqual(4, ones.BitwiseHomozygotes("stamina"));
 
 
-            Genome mixed = new Genome(bitwise.Initializer("mixed").Frequencies, false, new Random(SEED));
+            Genome mixed = new Genome(bitwise.Initializer("mixed"), false, new Random(SEED));
 
             int mixedSum = mixed.BitwiseSum("coi");
             int mixedDominant = mixed.BitwiseDominant("coi");

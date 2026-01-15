@@ -22,7 +22,7 @@ namespace Genelib {
             }
         }
         protected string[]? initializers;
-        protected AlleleFrequencies defaultFrequencies = null!;
+        protected GeneInitializer? defaultInitializer;
 
         public EntityBehaviorGenetics(Entity entity) : base(entity) { }
 
@@ -30,12 +30,9 @@ namespace Genelib {
             GenomeType = GenomeType.Get(
                 AssetLocation.Create(attributes["genomeType"].AsString(), entity.Code.Domain)
             );
-            if (attributes.KeyExists("defaultinitializer")) {
-                defaultFrequencies = GenomeType.Initializer(attributes["default"].AsString()).Frequencies;
-            }
-            else {
-                defaultFrequencies = GenomeType.DefaultFrequencies;
-            }
+            string definit = attributes["defaultInitializer"].AsString();
+            defaultInitializer = definit == null ? GenomeType.DefaultInitializer : GenomeType.Initializer(definit);
+
             initializers = attributes["initializers"].AsArray<string>() ?? arrayOrNull(attributes["initializer"].AsString());
 
             TreeAttribute geneticsTree = (TreeAttribute) entity.WatchedAttributes.GetTreeAttribute("genetics");
@@ -56,12 +53,11 @@ namespace Genelib {
                 if (Genome == null) {
                     Random random = entity.World.Rand;
                     bool heterogametic = GenomeType.SexDetermination.Heterogametic(entity.IsMale());
-                    AlleleFrequencies? frequencies = null;
+                    GeneInitializer? initializer = null;
                     BlockPos blockPos = entity.Pos.AsBlockPos;
                     ClimateCondition climate = entity.Api.World.BlockAccessor.GetClimateAt(blockPos);
-                    frequencies = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random)?.Frequencies
-                        ?? defaultFrequencies;
-                    Genome = new Genome(frequencies, heterogametic, random);
+                    initializer = GenomeType.ChooseInitializer(initializers, climate, blockPos.Y, random) ?? defaultInitializer;
+                    Genome = new Genome(initializer, heterogametic, random);
                     Genome.Mutate(GenelibConfig.MutationRate, random);
                     if (!onRuntimeSpawn) {
                         // Note the API does not provide a good way to distinguish between loading from save or spawning 
@@ -72,7 +68,7 @@ namespace Genelib {
                         }
                     }
                     foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
-                        interpreter.FinalizeSpawn(Genome, frequencies, random);
+                        interpreter.FinalizeSpawn(Genome, initializer, random);
                     }
                 }
             }

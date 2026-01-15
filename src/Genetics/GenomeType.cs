@@ -32,23 +32,11 @@ namespace Genelib {
 
         // Not serialized, so make sure not to try accessing from client
         private Dictionary<string, GeneInitializer> initializers = new Dictionary<string, GeneInitializer>();
+        public GeneInitializer? DefaultInitializer;
         public GeneInterpreter[] Interpreters { get; protected set; }
 
         [ProtoMember(6)]
         public SexDetermination SexDetermination { get; protected set; } = SexDetermination.XY;
-
-        private AlleleFrequencies? defaultFrequencies;
-        public AlleleFrequencies DefaultFrequencies {
-            get {
-                if (defaultFrequencies == null) {
-                    defaultFrequencies = new AlleleFrequencies(this);
-                }
-                return defaultFrequencies;
-                }
-            private set {
-                defaultFrequencies = value;
-            }
-        }
 
         [ProtoMember(7)]
         public string Name { get; private set; }

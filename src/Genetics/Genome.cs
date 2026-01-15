@@ -199,11 +199,11 @@ namespace Genelib {
             }
         }
 
-        public void SetNotHomozygousFor(string gene, string avoidAllele, AlleleFrequencies frequencies, string fallbackAllele) {
+        public void SetNotHomozygousFor(string gene, string avoidAllele, GeneInitializer initializer, string fallbackAllele) {
             int geneID = Type.Autosomal.GeneID(gene);
             byte avoidID = Type.Autosomal.AlleleID(geneID, avoidAllele);
             if (HasOnlyAlleles(geneID, avoidID)) {
-                float[]? f = frequencies.Autosomal?[geneID];
+                float[]? f = initializer.AutosomalFrequencies?[geneID];
                 if (f == null) {
                     if (avoidID != 0) Autosomal[geneID, 0] = (byte) 0;
                     else Autosomal[geneID, 0] = (byte) 1;
@@ -246,10 +246,19 @@ namespace Genelib {
             XZ = null!;
         }
 
-        public Genome(AlleleFrequencies frequencies, bool heterogametic, Random random) : this(frequencies.ForType, 2) {
+        public Genome(GeneInitializer? initializer, bool heterogametic, Random random) : this(initializer.ForType, 2) {
+            if (heterogametic) {
+                XZ = new byte[Type.XZ.GeneCount, Ploidy/2];
+            }
+            else {
+                XZ = new byte[Type.XZ.GeneCount, Ploidy];
+            }
+
+            if (initializer == null) return;
+
             for (int gene = 0; gene < Type.Autosomal.GeneCount; ++gene) {
                 for (int n = 0; n < Ploidy; ++n) {
-                    Autosomal[gene, n] = getRandomAllele(frequencies.Autosomal?[gene], random);
+                    Autosomal[gene, n] = getRandomAllele(initializer.AutosomalFrequencies?[gene], random);
                 }
             }
 
@@ -259,7 +268,7 @@ namespace Genelib {
 
             int i = 0;
             for (int group = 0; group < Type.Bitwise.GeneGroupCount; ++group) {
-                float[]? chances = frequencies.Bitwise?[group];
+                float[]? chances = initializer.BitwiseFrequencies?[group];
                 for (int gene = 0; gene < Type.Bitwise.GroupSizes[group]; ++gene) {
                     float chance = chances?[Math.Min(gene, chances.Length - 1)] ?? 0.5f;
                     for (int n = 0; n < Ploidy; ++n) {
@@ -271,16 +280,9 @@ namespace Genelib {
                 }
             }
 
-            if (heterogametic) {
-                XZ = new byte[Type.XZ.GeneCount, Ploidy/2];
-            }
-            else {
-                XZ = new byte[Type.XZ.GeneCount, Ploidy];
-            }
-
             for (int gene = 0; gene < Type.XZ.GeneCount; ++gene) {
                 for (int n = 0; n < XZ.GetLength(1); ++n) {
-                    XZ[gene, n] = getRandomAllele(frequencies.XZ?[gene], random);
+                    XZ[gene, n] = getRandomAllele(initializer.SexlinkedFrequencies?[gene], random);
                 }
             }
         }
