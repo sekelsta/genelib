@@ -499,7 +499,7 @@ namespace Genelib {
                 infotext.AppendLine(Lang.Get("Portions eaten: {0}", (int)saturation));
             }
 
-            double daysLeft = TotalDaysCooldownUntil - entity.World.Calendar.TotalDays;
+            double daysLeft = Math.Max(0, TotalDaysCooldownUntil - entity.World.Calendar.TotalDays);
 
             IGameCalendar calendar = entity.World.Calendar;
             double season = (calendar.GetSeasonRel(entity.Pos.AsBlockPos) + daysLeft / calendar.DaysPerMonth / 12) % 1;
