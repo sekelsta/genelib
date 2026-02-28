@@ -149,7 +149,7 @@ namespace Genelib
         public static void Grow_Initialize_Postfix(EntityBehaviorGrow __instance, EntityProperties properties, JsonObject typeAttributes) {
             IGameCalendar calendar = __instance.entity.World.Calendar;
             if (typeAttributes.KeyExists("monthsToGrow")) {
-                __instance.HoursToGrow = (float)GenelibConfig.AnimalMonthsToGameDays(typeAttributes["monthsToGrow"].AsDouble());
+                __instance.HoursToGrow = 24 * (float)GenelibConfig.AnimalMonthsToGameDays(typeAttributes["monthsToGrow"].AsDouble());
             }
         }
 
