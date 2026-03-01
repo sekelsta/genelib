@@ -40,6 +40,7 @@ namespace Genelib
         public override void Start(ICoreAPI api) {
             ServerAPI ??= api as ICoreServerAPI;
             ClientAPI ??= api as ICoreClientAPI;
+
             harmony.Patch(
                 typeof(ServerMain).GetMethod("SendServerAssets", BindingFlags.Instance | BindingFlags.Public),
                 postfix: new HarmonyMethod(typeof(GenelibSystem).GetMethod("SendServerAssets_Postfix", BindingFlags.Static | BindingFlags.Public)) 
@@ -73,7 +74,6 @@ namespace Genelib
 
             GenelibConfig.AnimalYearsScaleWithGameYears = API.ModLoader.IsModEnabled("seasonalbreeding"); // TO_LATER_DO: More configurable way to set this
             GenelibConfig.AnimalYearSpeed = GenelibConfig.AnimalYearsScaleWithGameYears ? 1 : 6;
-            api.Logger.Notification("sekdebug " + GenelibConfig.AnimalYearSpeed);
         }
 
         public override void AssetsLoaded(ICoreAPI api) {
@@ -114,6 +114,10 @@ namespace Genelib
 
             api.Input.RegisterHotKey("genelib.info", Lang.Get("genelib:gui-hotkey-animalinfo"), GlKeys.N, type: HotkeyType.GUIOrOtherControls);
             api.Input.SetHotKeyHandler("genelib.info", BehaviorAnimalInfo.ToggleAnimalInfoGUI);
+        }
+
+        public override void Dispose() {
+            harmony.UnpatchAll("sekelsta.genelib");
         }
 
         public static bool BecomeAdult_Prefix(EntityBehaviorGrow __instance, Entity adult, bool keepTextureIndex) {
