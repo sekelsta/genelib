@@ -13,7 +13,7 @@ namespace Genelib {
         }
 
         public void SetPriority(float value) {
-            this.priority = value;
+            this.Priority = value;
             this.priorityForCancel = value;
         }
 

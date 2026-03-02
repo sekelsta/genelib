@@ -32,10 +32,10 @@ namespace Genelib
             if (api.Side != EnumAppSide.Server) return;
 
             if (!GenelibSystem.AutoadjustAnimalBehaviors) return;
-            EntityTagArray animalTag = api.TagRegistry.EntityTagsToTagArray("animal");
+            TagSetFast animalTag = api.EntityTagRegistry.CreateTagSet("animal");
             JsonObject infoBehavior = JsonObject.FromJson("{code: \"" + BehaviorAnimalInfo.Code + "\", showtagonlywhentargeted: true}");
             foreach (EntityProperties entityType in api.World.EntityTypes) {
-                if (!entityType.Tags.ContainsAll(animalTag)) continue;
+                if (!animalTag.IsFullyContainedIn(entityType.Tags)) continue;
 
                 bool serverInfoBehavior = false;
                 foreach (JsonObject jsonObject in entityType.Server.BehaviorsAsJsonObj) {
