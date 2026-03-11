@@ -10,28 +10,31 @@ namespace Genelib {
         public readonly int Ploidy = 2;
         // Dimensions are [genes, ploidy]
         public byte[,] Autosomal { get; protected set; }
-        public byte[,] Anonymous { get; protected set; }
         public byte[,] XZ { get; protected set; }
+
+        // Holds groups of genes, groups are named, genes are not, and alleles are each 1 byte
+        // Each gene group holds data in a 2D array with dimensions [genes, ploidy]
+        public TreeAttribute Anonymous { get; protected set; }
         // A compact way to store numerous genes each with only 2 possible alleles
-        // Format: Basic layout similar to autosomal genes (gene copies grouped), but compressed down to where each allele is only 1 bit.
+        // Format: Tree mapping gene strings to allele byte arrays, with individual alleles each being 1 bit of the byte
         // Across the bytes in the array the order is as you'd expect, starting at index 0 and increasing.
         // Within each byte, the order is right to left - 0th is 0 bitshifts from the right, 1 is one bitshift from the right, etc.
         // So for a typical n=2 creature, the first byte has 2 bits for the two alleles of the first gene, same for the second, third, and fourth, and then the fifth is on the second byte.
-        public byte[] Bitwise { get; protected set; }
+        public TreeAttribute Bitwise { get; protected set; }
 
-        public int GetBitwiseAllele(int gene, int n) {
+        protected int GetBitwiseAllele(byte[] bitwise, int gene, int n) {
             int i = gene * Ploidy + n;
             int b = i % 8;
-            return (Bitwise[i/8] >> b) & 1;
+            return (bitwise[i/8] >> b) & 1;
         }
 
-        public void SetBitwiseAllele(int gene, int n, int val) {
+        protected void SetBitwiseAllele(byte[] bitwise, int gene, int n, int val) {
             int i = Ploidy * gene + n;
             int b = i % 8;
-            byte v = Bitwise[i/8];
+            byte v = bitwise[i/8];
             v = (byte)(v & ~(1 << b)); // Set to 0
             v = (byte)(v | (val << b)); // Now set from 0 to val
-            Bitwise[i/8] = v;
+            bitwise[i/8] = v;
         }
 
         // Checks if any allele matches any of the given alleles, for an autosomal gene
@@ -95,69 +98,57 @@ namespace Genelib {
             return !IsHomogametic();
         }
 
-        public int BitwiseSum(Range range) {
+        public int BitwiseSum(string geneGroup) {
+            byte[] bytes = Bitwise.GetBytes(geneGroup);
             int total = 0;
-            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+            for (int g = 0; g < bytes.Length; ++g) {
                 for (int n = 0; n < Ploidy; ++n) {
-                    total += GetBitwiseAllele(g, n);
+                    total += GetBitwiseAllele(bytes, g, n);
                 }
             }
             return total;
         }
 
-        // Returns the number of genes in the given range where ANY allele is 1
-        public int BitwiseDominant(Range range) {
+        // Returns the number of genes in the given group where ANY allele is 1
+        public int BitwiseDominant(string geneGroup) {
+            byte[] bytes = Bitwise.GetBytes(geneGroup);
             int total = 0;
-            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+            for (int g = 0; g < bytes.Length; ++g) {
                 int v = 0;
                 for (int n = 0; n < Ploidy; ++n) {
-                    v |= GetBitwiseAllele(g, n);
+                    v |= GetBitwiseAllele(bytes, g, n);
                 }
                 total += v;
             }
             return total;
         }
 
-        // Returns the number of genes in the given range where EVERY allele is 1
-        public int BitwiseRecessive(Range range) {
+        // Returns the number of genes in the given group where EVERY allele is 1
+        public int BitwiseRecessive(string geneGroup) {
+            byte[] bytes = Bitwise.GetBytes(geneGroup);
             int total = 0;
-            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+            for (int g = 0; g < bytes.Length; ++g) {
                 int v = 1;
                 for (int n = 0; n < Ploidy; ++n) {
-                    v &= GetBitwiseAllele(g, n);
+                    v &= GetBitwiseAllele(bytes, g, n);
                 }
                 total += v;
             }
             return total;
         }
 
-        public int BitwiseHomozygotes(Range range) {
+        public int BitwiseHomozygotes(string geneGroup) {
+            byte[] bytes = Bitwise.GetBytes(geneGroup);
             int total = 0;
-            for (int g = range.Start.Value; g < range.End.Value; ++g) {
+            for (int g = 0; g < bytes.Length; ++g) {
                 bool match = true;
-                int a = GetBitwiseAllele(g, 0);
+                int a = GetBitwiseAllele(bytes, g, 0);
                 for (int n = 1; n < Ploidy; ++n) {
-                    match = match && GetBitwiseAllele(g, n) == a;
+                    match = match && GetBitwiseAllele(bytes, g, n) == a;
                 }
                 if (match) total += 1;
             }
             return total;
-        }
-
-        public int BitwiseSum(string geneGroup) {
-            return BitwiseSum(Type.Bitwise.TryGetRange(geneGroup));
-        }
-
-        public int BitwiseDominant(string geneGroup) {
-            return BitwiseDominant(Type.Bitwise.TryGetRange(geneGroup));
-        }
-
-        public int BitwiseRecessive(string geneGroup) {
-            return BitwiseRecessive(Type.Bitwise.TryGetRange(geneGroup));
-        }
-
-        public int BitwiseHomozygotes(string geneGroup) {
-            return BitwiseHomozygotes(Type.Bitwise.TryGetRange(geneGroup));
         }
 
         public bool HasAllele(string gene, params string[] alleles) {
@@ -238,15 +229,15 @@ namespace Genelib {
             Ploidy = ploidy;
 
             Autosomal = new byte[Type.Autosomal.GeneCount, Ploidy];
-            Anonymous = new byte[Type.Anonymous.GeneCount, Ploidy];
 
-            Bitwise = new byte[(int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0)];
+            Anonymous = new TreeAttribute();
+            Bitwise = new TreeAttribute();
 
             // Leaves the sex chromosomes uninitialized
             XZ = null!;
         }
 
-        public Genome(GeneInitializer? initializer, bool heterogametic, Random random) : this(initializer.ForType, 2) {
+        public Genome(GeneInitializer initializer, bool heterogametic, Random random) : this(initializer.ForType, 2) {
             if (heterogametic) {
                 XZ = new byte[Type.XZ.GeneCount, Ploidy/2];
             }
@@ -262,18 +253,24 @@ namespace Genelib {
                 }
             }
 
-            byte[] buffer = new byte[Anonymous.GetLength(0) * Anonymous.GetLength(1)];
-            random.NextBytes(buffer);
-            Buffer.BlockCopy(buffer, 0, Anonymous, 0, buffer.Length);
+            foreach (var (name, count) in Type.Anonymous) {
+                byte[] buffer = new byte[count * Ploidy];
+                random.NextBytes(buffer);
+                byte[,] anonymous = new byte[count, Ploidy];
+                Buffer.BlockCopy(buffer, 0, anonymous, 0, buffer.Length);
+                Anonymous.SetAttribute(name, new ByteArray2DAttribute(anonymous));
+            }
 
             int i = 0;
-            for (int group = 0; group < Type.Bitwise.GeneGroupCount; ++group) {
-                float[]? chances = initializer.BitwiseFrequencies?[group];
-                for (int gene = 0; gene < Type.Bitwise.GroupSizes[group]; ++gene) {
+            foreach (var (name, count) in Type.Bitwise) {
+                float[]? chances = initializer.BitwiseFrequencies?[name];
+                byte[] alleles = new byte[(int)Math.Ceiling(count * Ploidy / 8.0)];
+                Bitwise.SetBytes(name, alleles);
+                for (int gene = 0; gene < count; ++gene) {
                     float chance = chances?[Math.Min(gene, chances.Length - 1)] ?? 0.5f;
                     for (int n = 0; n < Ploidy; ++n) {
                         if (random.NextSingle() < chance) {
-                            Bitwise[i/8] |= (byte) (1 << (i % 8));
+                            alleles[i/8] |= (byte) (1 << (i % 8));
                         }
                         i += 1;
                     }
@@ -306,12 +303,36 @@ namespace Genelib {
             Genome gamete = new Genome(Type, Ploidy / 2);
 
             SplitGenes(gamete.Autosomal, Autosomal, random);
-            SplitGenes(gamete.Anonymous, Anonymous, random);
 
-            for (int p = 0; p < gamete.Ploidy; ++p) {
-                for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
-                    int n = random.Next(2);
-                    gamete.SetBitwiseAllele(gene, p, GetBitwiseAllele(gene, 2 * p + n));
+            foreach (var (name, count) in Type.Anonymous) {
+                byte[,]? ourAlleles = ((ByteArray2DAttribute)Anonymous.GetAttribute(name) as ByteArray2DAttribute)?.value;
+                if (ourAlleles == null) continue;
+
+                byte[,] gameteAlleles = new byte[count, gamete.Ploidy];
+                gamete.Anonymous.SetAttribute(name, new ByteArray2DAttribute(gameteAlleles));
+                for (int p = 0; p < gamete.Ploidy; ++p) {
+                    for (int gene = 0; gene < count && gene < ourAlleles.GetLength(0); ++gene) {
+                        int n = random.Next(2);
+                        gameteAlleles[gene, p] = ourAlleles[gene, 2 * p + n];
+                    }
+                    // If the json changed since we spawned and made this gene group larger, we are leaving the new ones as all zeros
+                    // This might or might not be desired. Ideally it would be up to the mod adding the gene.
+                }
+            }
+
+            foreach (var (name, count) in Type.Bitwise) {
+                byte[]? ourAlleles = Bitwise.GetBytes(name);
+                if (ourAlleles == null) continue;
+
+                byte[] gameteAlleles = new byte[(int)Math.Ceiling(Type.Bitwise.TryGetValue(name) * gamete.Ploidy / 8.0)];
+                gamete.Bitwise.SetBytes(name, gameteAlleles);
+                for (int p = 0; p < gamete.Ploidy; ++p) {
+                    // Check both lengths, since the type definition may have changed after this genome was created
+                    for (int gene = 0; gene < count && gene * Ploidy < 8 * ourAlleles.Length; ++gene) {
+                        int n = random.Next(2);
+                        gamete.SetBitwiseAllele(gameteAlleles, gene, p, GetBitwiseAllele(ourAlleles, gene, 2 * p + n));
+                    }
+                    // And again we're leaving any leftovers as 0, which may or may not be desired
                 }
             }
 
@@ -345,7 +366,18 @@ namespace Genelib {
         public virtual Genome Join(Genome other) {
             Genome zygote = new Genome(Type, this.Ploidy + other.Ploidy);
             JoinGenes(zygote.Autosomal, this.Autosomal, other.Autosomal);
-            JoinGenes(zygote.Anonymous, this.Anonymous, other.Anonymous);
+            foreach (var (name, count) in Type.Anonymous) {
+                byte[,] zygoteAlleles = new byte[count, zygote.Ploidy];
+                zygote.Anonymous.SetAttribute(name, new ByteArray2DAttribute(zygoteAlleles));
+                byte[,]? ourAlleles = (this.Anonymous.GetAttribute(name) as ByteArray2DAttribute)?.value;
+                byte[,]? otherAlleles = (other.Anonymous.GetAttribute(name) as ByteArray2DAttribute)?.value;
+                if (ourAlleles == null && otherAlleles == null) continue;
+
+                // We are again turning missing information into zeros here, which may or may not be desired
+                ourAlleles ??= new byte[count, Ploidy];
+                otherAlleles ??= new byte[count, other.Ploidy];
+                JoinGenes(zygoteAlleles, ourAlleles, otherAlleles);
+            }
 
             for (int gene = 0; gene < Type.Bitwise.GeneCount; ++gene) {
                 for (int p = 0; p < this.Ploidy; ++p) {
@@ -458,10 +490,11 @@ namespace Genelib {
                     Anonymous[i,0] = oldAnonymous[i - deleterious.Start.Value + 32, 0];
                     Anonymous[i,1] = oldAnonymous[i - deleterious.Start.Value + 32, 1];
                 }
-                Range coi = Type.Bitwise.TryGetRange("coi");
+                byte[] coi = new byte[Type.Bitwise.GroupSize("coi") * Ploidy];
+                Bitwise.SetByteArray("coi", coi);
                 for (int i = coi.Start.Value; i < coi.End.Value; ++i) {
-                    SetBitwiseAllele(i, 0, oldAnonymous[i - coi.Start.Value, 0]);
-                    SetBitwiseAllele(i, 1, oldAnonymous[i - coi.Start.Value, 1]);
+                    SetBitwiseAllele(coi, i, 0, oldAnonymous[i - coi.Start.Value, 0]);
+                    SetBitwiseAllele(coi, i, 1, oldAnonymous[i - coi.Start.Value, 1]);
                 }
             }
         }
@@ -472,7 +505,7 @@ namespace Genelib {
             // Note these values could temporarily be null, until UpdateForType is called
             Autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArray2DAttribute)?.value!;
             Anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArray2DAttribute)?.value!;
-            Bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArrayAttribute)?.value!;
+            Bitwise = geneticsTree.GetTreeAttribute("bitwise") ?? new TreeAttribute();
             XZ = (geneticsTree.GetAttribute("xz") as ByteArray2DAttribute)?.value!;
 
             Ploidy = (Autosomal ?? Anonymous ?? XZ)?.GetLength(1) ?? 2;
@@ -520,11 +553,11 @@ namespace Genelib {
             else {
                 geneticsTree.SetAttribute("anonymous", new ByteArray2DAttribute(Anonymous));
             }
-            if (Bitwise.Length == 0) {
+            if (Bitwise.Count == 0) {
                 geneticsTree.RemoveAttribute("bitwise");
             }
             else {
-                geneticsTree.SetAttribute("bitwise", new ByteArrayAttribute(Bitwise));
+                geneticsTree.SetAttribute("bitwise", Bitwise);
             }
             // Set XZ regardless of whether the length is 0 or not
             geneticsTree.SetAttribute("xz", new ByteArray2DAttribute(XZ));

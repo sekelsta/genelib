@@ -26,9 +26,9 @@ namespace Genelib {
         [ProtoMember(3)]
         public NameMapping YW { get; protected set; }
         [ProtoMember(4)]
-        public NameGroupMapping Anonymous { get; protected set; }
+        public FastSmallDictionary<string, int> Anonymous { get; protected set; }
         [ProtoMember(5)]
-        public NameGroupMapping Bitwise { get; protected set; }
+        public FastSmallDictionary<string, int> Bitwise { get; protected set; }
 
         // Not serialized, so make sure not to try accessing from client
         private Dictionary<string, GeneInitializer> initializers = new Dictionary<string, GeneInitializer>();
@@ -51,8 +51,8 @@ namespace Genelib {
             Name = "uninitialized";
             Autosomal = new NameMapping();
             XZ = new NameMapping();
-            Anonymous = new NameGroupMapping();
-            Bitwise = new NameGroupMapping();
+            Anonymous = new(1);
+            Bitwise = new(1);
             Interpreters = new GeneInterpreter[0];
         }
 
@@ -97,24 +97,24 @@ namespace Genelib {
             return new NameMapping(geneArray, alleleArrays);
         }
 
-        private NameGroupMapping parseGrouped(JsonObject json) {
+        private FastSmallDictionary<string, int> parseGrouped(JsonObject json) {
             if (!json.Exists) {
-                return new NameGroupMapping();
+                return new(1);
             }
+
             JsonObject[]? genes = json.AsArray();
-            string[] groupNames = new string[genes.Length];
-            int[] groupSizes = new int[genes.Length];
+            FastSmallDictionary<string, int> result = new(genes.Length);
             for (int gene = 0; gene < genes.Length; ++gene) {
                 // Each gene object is expected to contain just one property, with the gene group name as the key
-                JProperty? jp = ((JObject) genes[gene].Token).Properties().First();
-                groupNames[gene] = jp.Name;
+                // TODO: Since order no longer matters, json format should be changed from array to object
+                JProperty jp = ((JObject) genes[gene].Token).Properties().First();
                 int count = new JsonObject(jp.Value).AsInt();
                 if (count < 0) {
                     throw new Exception(jp.Name + ": Can't have a negative number of genes! count=" + count);
                 }
-                groupSizes[gene] = count;
+                result[jp.Name] = count;
             }
-            return new NameGroupMapping(groupNames, groupSizes);
+            return result;
         }
 
         public static void Load(IAsset asset) {

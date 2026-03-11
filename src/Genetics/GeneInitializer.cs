@@ -13,7 +13,7 @@ namespace Genelib {
         public GenomeType ForType;
         private JsonObject? attributes;
         public float[]?[]? AutosomalFrequencies;
-        public float[]?[]? BitwiseFrequencies;
+        public FastSmallDictionary<string, float[]>? BitwiseFrequencies;
         public float[]?[]? SexlinkedFrequencies;
         private ClimateSpawnCondition? climateCondition;
         private float minGeo;
@@ -53,11 +53,10 @@ namespace Genelib {
 
             JsonObject jsonBitwise = attributes["bitwise"];
             if (jsonBitwise.Exists) {
-                BitwiseFrequencies = new float[type.Bitwise.GeneCount][];
+                BitwiseFrequencies = new(type.Bitwise.Count);
                 foreach (JProperty jp in ((JObject) jsonBitwise.Token).Properties()) {
                     string geneGroup = jp.Name;
-                    int groupSize = type.Bitwise.GroupSize(geneGroup);
-                    int ordinal = type.Bitwise.GroupOrdinal(geneGroup);
+                    int groupSize = type.Bitwise[geneGroup];
                     if (jp.Value.Type == JTokenType.Array) {
                         float[]? values = jp.Value.ToObject<float[]>();
                         if (values == null) {
@@ -66,11 +65,11 @@ namespace Genelib {
                         if (values.Length > groupSize || values.Length < 1) {
                             throw new Exception("Incorrect number of values for initializing bitwise gene group " + geneGroup + " in genome type " + type.Name);
                         }
-                        BitwiseFrequencies[ordinal] = values;
+                        BitwiseFrequencies[geneGroup] = values;
                     }
                     else {
                         float chance = new JsonObject(jp.Value).AsFloat();
-                        BitwiseFrequencies[ordinal] = new float[] { chance };
+                        BitwiseFrequencies[geneGroup] = new float[] { chance };
                     }
                 }
             }

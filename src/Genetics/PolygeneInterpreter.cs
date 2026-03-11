@@ -1,34 +1,39 @@
 using System;
 using Genelib.Extensions;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
 
 namespace Genelib {
     public class PolygeneInterpreter : GeneInterpreter {
         public string Name => "Polygenes";
 
         void GeneInterpreter.FinalizeSpawn(Genome genome, GeneInitializer initializer, Random random) {
-            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+            genome.Anonymous.TryGetAttribute("deleterious", out IAttribute attribute);
+            byte[,]? deleterious = (attribute as ByteArray2DAttribute)?.value;
+            if (deleterious == null) return;
 
-            for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
+            for (int gene = 0; gene < deleterious.GetLength(0); ++gene) {
                 bool homozygous = true;
                 for (int n = 0; n < genome.Ploidy; ++n) {
                     if (random.NextSingle() < GenelibConfig.Instance.InbreedingResistance) {
-                        genome.Anonymous[gene, n] = 0;
+                        deleterious[gene, n] = 0;
                     }
-                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
+                    homozygous = homozygous && deleterious[gene, n] == deleterious[gene, 0];
                 }
-                if (homozygous) genome.Anonymous[gene, 0] = 0;
+                if (homozygous) deleterious[gene, 0] = 0;
             }
         }
 
         private int countVitalityHomozygotes(Genome genome) {
-            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+            genome.Anonymous.TryGetAttribute("deleterious", out IAttribute attribute);
+            byte[,]? deleterious = (attribute as ByteArray2DAttribute)?.value;
+            if (deleterious == null) return 0;
 
             int duplicates = 0;
-            for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
+            for (int gene = 0; gene < deleterious.GetLength(0); ++gene) {
                 bool homozygous = true;
                 for (int n = 0; n < genome.Ploidy; ++n) {
-                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
+                    homozygous = homozygous && deleterious[gene, n] == deleterious[gene, 0];
                 }
                 if (homozygous) duplicates += 1;
             }
@@ -43,10 +48,9 @@ namespace Genelib {
             Entity entity = genetics.entity;
             Genome genome = genetics.Genome;
 
-            Range range = genome.Type.Bitwise.TryGetRange("coi");
-            int numGenes = range.End.Value - range.Start.Value;
+            int numGenes = genome.Type.Bitwise.TryGetValue("coi");
             if (numGenes > 0) {
-                int repeats = genome.BitwiseHomozygotes(range);
+                int repeats = genome.BitwiseHomozygotes("coi");
                 float coi = repeats / (float)numGenes;
                 entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
             }
