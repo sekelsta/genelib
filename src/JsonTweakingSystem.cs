@@ -39,7 +39,7 @@ namespace Genelib
 
                 bool serverInfoBehavior = false;
                 foreach (JsonObject jsonObject in entityType.Server.BehaviorsAsJsonObj) {
-                    string code = jsonObject["code"].AsString();
+                    string? code = jsonObject["code"].AsString();
                     if (code == BehaviorAnimalInfo.Code) {
                         serverInfoBehavior = true;
                         break;
@@ -51,7 +51,7 @@ namespace Genelib
 
                 bool clientInfoBehavior = false;
                 foreach (JsonObject jsonObject in entityType.Client.BehaviorsAsJsonObj) {
-                    string code = jsonObject["code"].AsString();
+                    string? code = jsonObject["code"].AsString();
                     if (code == BehaviorAnimalInfo.Code) {
                         clientInfoBehavior = true;
                         break;

@@ -1,6 +1,7 @@
 using Genelib.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -30,25 +31,19 @@ namespace Genelib {
             GenomeType = GenomeType.Get(
                 AssetLocation.Create(attributes["genomeType"].AsString(), entity.Code.Domain)
             );
-            if (attributes.KeyExists("defaultinitializer")) {
-                defaultFrequencies = GenomeType.Initializer(attributes["default"].AsString()).Frequencies;
+            string? defaultInitializer = attributes["defaultInitializer"].AsString();
+            if (defaultInitializer != null) {
+                defaultFrequencies = GenomeType.Initializer(defaultInitializer).Frequencies;
             }
             else {
                 defaultFrequencies = GenomeType.DefaultFrequencies;
             }
-            initializers = attributes["initializers"].AsArray<string>() ?? arrayOrNull(attributes["initializer"].AsString());
+            initializers = attributes["initializers"].AsArray<string>()?.Select(x => x ?? throw new ArgumentNullException("entry in initializers list for entity with code " + entity.Code)).ToArray();
 
             TreeAttribute geneticsTree = (TreeAttribute) entity.WatchedAttributes.GetTreeAttribute("genetics");
             if (geneticsTree != null) {
                 Genome = new Genome(GenomeType, geneticsTree);
             }
-        }
-
-        private string[]? arrayOrNull(string s) {
-            if (s == null) {
-                return null;
-            }
-            return new string[] { s };
         }
 
         public override void AfterInitialized(bool onRuntimeSpawn) {

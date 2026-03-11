@@ -78,16 +78,17 @@ namespace Genelib {
             Anonymous = parseGrouped(genes["anonymous"]);
             Bitwise = parseGrouped(genes["bitwise"]);
 
-            if (attributes.KeyExists("initializers")) {
-                JsonObject initialization = attributes["initializers"];
+            JsonObject initialization = attributes["initializers"];
+            if (initialization.Exists) {
                 foreach (JProperty jp in ((JObject) initialization.Token).Properties()) {
                     initializers[jp.Name] = new GeneInitializer(this, jp.Name, new JsonObject(jp.Value));
                 }
             }
-            if (attributes.KeyExists("sexdetermination")) {
-                SexDetermination = SexDeterminationExtensions.Parse(attributes["sexdetermination"].AsString());
+            string? sexDetString = attributes["sexdetermination"].AsString();
+            if (sexDetString != null) {
+                SexDetermination = SexDeterminationExtensions.Parse(sexDetString);
             }
-            string[] interpreterNames = attributes["interpreters"].AsArray<string>();
+            string[]? interpreterNames = attributes["interpreters"].AsArray<string>();
             Interpreters = new GeneInterpreter[interpreterNames.Length];
             for (int i = 0; i < interpreterNames.Length; ++i) {
                 Interpreters[i] = interpreterMap[interpreterNames[i]];
@@ -98,12 +99,12 @@ namespace Genelib {
             if (!json.Exists) {
                 return new NameMapping();
             }
-            JsonObject[] genes = json.AsArray();
-            string[] geneArray = new string[genes.Length];
-            string[][] alleleArrays = new string[genes.Length][];
+            JsonObject[]? genes = json.AsArray();
+            string[]? geneArray = new string[genes.Length];
+            string[][]? alleleArrays = new string[genes.Length][];
             for (int gene = 0; gene < genes.Length; ++gene) {
                 // Each gene object is expected to contain just one property, with the gene name as the key
-                JProperty jp = ((JObject) genes[gene].Token).Properties().First();
+                JProperty? jp = ((JObject) genes[gene].Token).Properties().First();
                 geneArray[gene] = jp.Name;
                 alleleArrays[gene] = new JsonObject(jp.Value).AsArray<string>();
             }
@@ -114,12 +115,12 @@ namespace Genelib {
             if (!json.Exists) {
                 return new NameGroupMapping();
             }
-            JsonObject[] genes = json.AsArray();
+            JsonObject[]? genes = json.AsArray();
             string[] groupNames = new string[genes.Length];
             int[] groupSizes = new int[genes.Length];
             for (int gene = 0; gene < genes.Length; ++gene) {
                 // Each gene object is expected to contain just one property, with the gene group name as the key
-                JProperty jp = ((JObject) genes[gene].Token).Properties().First();
+                JProperty? jp = ((JObject) genes[gene].Token).Properties().First();
                 groupNames[gene] = jp.Name;
                 int count = new JsonObject(jp.Value).AsInt();
                 if (count < 0) {

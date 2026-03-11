@@ -44,7 +44,7 @@ namespace Genelib.Extensions {
 
         public static bool IsMale(this Entity entity) {
             // Sometimes property attributes are null, so need to check
-            if (entity.Properties.Attributes == null) {
+            if (entity.Properties.Attributes == null || !entity.Properties.Attributes.Exists) {
                 return false;
             }
             if (!entity.Properties.Attributes.KeyExists("male")) {

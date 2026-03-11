@@ -197,14 +197,14 @@ namespace Genelib
             }
             int multiplyIndex = -1;
             for (int i = 0; i < behaviors.Length; ++i) {
-                string code = behaviors[i]["code"].AsString();
+                string? code = behaviors[i]["code"].AsString();
                 if (code == "multiply") {
                     multiplyIndex = i;
                 }
             }
 
             if (multiplyIndex != -1) {
-                JObject multiplyJson = (JObject)(behaviors[multiplyIndex].Token);
+                JObject multiplyJson = (JObject)(behaviors[multiplyIndex].Token!);
                 multiplyJson.Property("code")!.Value = new JValue(GeneticMultiply.Code);
             }
 

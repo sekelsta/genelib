@@ -39,7 +39,7 @@ namespace Genelib {
                 if (inventory[i].Empty) {
                     continue;
                 }
-                if (isRot(inventory[i].Itemstack)) {
+                if (isRot(inventory[i].Itemstack!)) {
                     return true;
                 }
             }
@@ -103,7 +103,7 @@ namespace Genelib {
                 if (inventory[i].Empty) {
                     continue;
                 }
-                ItemStack stack = inventory[i].Itemstack;
+                ItemStack stack = inventory[i].Itemstack!;
                 if (isRot(stack)) {
                     anyRot = true;
                     continue;
@@ -124,7 +124,7 @@ namespace Genelib {
                     double check = 0.1;
                     if (incubationHoursTotal > 0 && 1 - (incubationHoursPrev / incubationHoursTotal) < check 
                                                  && 1 - (incubationHoursNext / incubationHoursTotal) >= check) {
-                        EntityProperties spawnType = Api.World.GetEntityType(chickCode);
+                        EntityProperties? spawnType = Api.World.GetEntityType(chickCode);
                         if (spawnType == null) {
                             throw new Exception(Block.Code.ToString() + " attempted to incubate egg containing entity with code " + chickCode.ToString() + ", but no such entity was found.");
                         }
@@ -189,7 +189,7 @@ namespace Genelib {
                 if (inventory[i].Empty) {
                     continue;
                 }
-                ItemStack stack = inventory[i].Itemstack;
+                ItemStack stack = inventory[i].Itemstack!;
                 if (isRot(stack)) {
                     anyRot = true;
                 }

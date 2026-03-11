@@ -402,7 +402,7 @@ namespace Genelib {
             {
                 spawnCode = remap;
             }
-            EntityProperties spawnType = world.GetEntityType(spawnCode);
+            EntityProperties? spawnType = world.GetEntityType(spawnCode);
             if (spawnType == null) {
                 world.Logger.Warning(foster?.Code.ToString() + " attempted to hatch or give birth to entity with code " 
                     + spawnCode.ToString() + ", but no such entity was found.");
@@ -546,17 +546,13 @@ namespace Genelib {
             RequiresNearbyEntityRange = attributes["requiresNearbyEntityRange"].AsFloat(16);
 
             // Allow sireCodes as a json synonym of requiresNearbyEntitycodes
-            if (attributes.KeyExists("sireCodes")) {
-                string[] sireStrings = attributes["sireCodes"].AsArray<string>();
+            string?[]? sireStrings = attributes["sireCodes"].AsArray<string>();
+            if (sireStrings != null) {
                 RequiresNearbyEntityCodes = sireStrings.Select(x => AssetLocation.Create(x, entity.Code.Domain)).ToArray();
             }
 
-            if (attributes.KeyExists("litterAddChance")) {
-                litterAddChance = attributes["litterAddChance"].AsDouble();
-            }
-            if (attributes.KeyExists("mateTaskPriority")) {
-                MateTaskPriority = attributes["mateTaskPriority"].AsFloat();
-            }
+            litterAddChance = attributes["litterAddChance"].AsDouble(litterAddChance);
+            MateTaskPriority = attributes["mateTaskPriority"].AsFloat(MateTaskPriority);
 
             if (attributes.KeyExists("multiplyCooldownMonthsMin")) {
                 MultiplyCooldownDaysMin = GenelibConfig.AnimalMonthsToGameDays(attributes["multiplyCooldownMonthsMin"].AsDouble());

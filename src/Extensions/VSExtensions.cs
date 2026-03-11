@@ -38,7 +38,7 @@ namespace Genelib.Extensions {
         public static GenomeType? GetGenomeType(this EntityProperties entityType) {
             JsonObject[] jsonBehaviors = entityType.Server.BehaviorsAsJsonObj;
             for (int i = 0; i < jsonBehaviors.Length; ++i) {
-                string code = jsonBehaviors[i]["code"].AsString();
+                string? code = jsonBehaviors[i]["code"].AsString();
                 if (code == EntityBehaviorGenetics.Code) {
                     return GenomeType.Get(
                         AssetLocation.Create(jsonBehaviors[i]["genomeType"].AsString(), entityType.Code.Domain)
