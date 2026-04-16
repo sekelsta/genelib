@@ -442,40 +442,16 @@ namespace Genelib {
             return array;
         }
 
-        protected virtual void UpdateForType() {
-            bool moveCoiGenes = Autosomal.Length == 2 * 48 && Bitwise == null && Ploidy == 2; // TODO: Remove this after people have had a chance to update, but before it starts causing problems
-            this.Autosomal = atLeastSize(Autosomal, Type.Autosomal.GeneCount);
-            this.Anonymous = atLeastSize(Anonymous, Type.Anonymous.GeneCount);
-            this.Bitwise = atLeastSize(Bitwise, (int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0));
-            this.XZ = atLeastSize(XZ, Type.XZ.GeneCount);
-            if (moveCoiGenes) {
-                byte[,] oldAnonymous = Anonymous;
-                Anonymous = new Byte[Type.Anonymous.GeneCount, 2];
-                // Bitwise will have already been set to the new size
-                // Old anonymous gene format: 32 diversity genes (COI) followed by 16 vitality genes (deleterious)
-                Range deleterious = Type.Anonymous.TryGetRange("deleterious");
-                for (int i = deleterious.Start.Value; i < deleterious.End.Value; ++i) {
-                    Anonymous[i,0] = oldAnonymous[i - deleterious.Start.Value + 32, 0];
-                    Anonymous[i,1] = oldAnonymous[i - deleterious.Start.Value + 32, 1];
-                }
-                Range coi = Type.Bitwise.TryGetRange("coi");
-                for (int i = coi.Start.Value; i < coi.End.Value; ++i) {
-                    SetBitwiseAllele(i, 0, oldAnonymous[i - coi.Start.Value, 0]);
-                    SetBitwiseAllele(i, 1, oldAnonymous[i - coi.Start.Value, 1]);
-                }
-            }
-        }
-
         public Genome(GenomeType type, TreeAttribute geneticsTree) {
             this.Type = type;
 
-            // Note these values could temporarily be null, until UpdateForType is called
+            // Note these values could temporarily be null, until the rest of the constructor logic runs
             Autosomal = (geneticsTree.GetAttribute("autosomal") as ByteArray2DAttribute)?.value!;
             Anonymous = (geneticsTree.GetAttribute("anonymous") as ByteArray2DAttribute)?.value!;
             Bitwise = (geneticsTree.GetAttribute("bitwise") as ByteArrayAttribute)?.value!;
             XZ = (geneticsTree.GetAttribute("xz") as ByteArray2DAttribute)?.value!;
 
-            Ploidy = (Autosomal ?? Anonymous ?? XZ)?.GetLength(1) ?? 2;
+            Ploidy = (Autosomal ?? Anonymous)?.GetLength(1) ?? 2;
 
             // Update from previous save format where primary and secondary XZ chromosomes were separate
             byte[]? primary_xz = (geneticsTree.GetAttribute("primary_xz") as ByteArrayAttribute)?.value;
@@ -499,35 +475,68 @@ namespace Genelib {
             if (geneticsTree.GetAttribute("heterogametic") == null) {
                 heterogametic = geneticsTree.GetAttribute("yw") != null;
             }
-            XZ ??= new byte[0, heterogametic ? Ploidy/2 : Ploidy]; // Need to set correct ploidy for it here, then length gets handled by UpdateForType
-            UpdateForType();
-            // Just to make the compiler happy about nullability. Should never happen unless someone overrides UpdateForType to do something dumb
-            ArgumentNullException.ThrowIfNull(Autosomal);
-            ArgumentNullException.ThrowIfNull(Anonymous);
+            XZ ??= new byte[0, heterogametic ? Ploidy/2 : Ploidy]; // Need to set correct ploidy for it here, then length gets handled later
+
+
+            bool moveCoiGenes = Autosomal.Length == 2 * 48 && Bitwise == null && Ploidy == 2; // TODO: Remove this after people have had a chance to update, but before it starts causing problems
+
+            this.Autosomal = atLeastSize(Autosomal, Type.Autosomal.GeneCount);
+            this.Anonymous = atLeastSize(Anonymous, Type.Anonymous.GeneCount);
+            this.Bitwise = atLeastSize(Bitwise, (int)Math.Ceiling(Ploidy * Type.Bitwise.GeneCount / 8.0));
+            this.XZ = atLeastSize(XZ, Type.XZ.GeneCount);
+
+            if (moveCoiGenes) {
+                byte[,] oldAnonymous = Anonymous;
+                Anonymous = new Byte[Type.Anonymous.GeneCount, 2];
+                // Bitwise will have already been set to the new size
+                // Old anonymous gene format: 32 diversity genes (COI) followed by 16 vitality genes (deleterious)
+                Range deleterious = Type.Anonymous.TryGetRange("deleterious");
+                for (int i = deleterious.Start.Value; i < deleterious.End.Value; ++i) {
+                    Anonymous[i,0] = oldAnonymous[i - deleterious.Start.Value + 32, 0];
+                    Anonymous[i,1] = oldAnonymous[i - deleterious.Start.Value + 32, 1];
+                }
+                Range coi = Type.Bitwise.TryGetRange("coi");
+                for (int i = coi.Start.Value; i < coi.End.Value; ++i) {
+                    SetBitwiseAllele(i, 0, oldAnonymous[i - coi.Start.Value, 0]);
+                    SetBitwiseAllele(i, 1, oldAnonymous[i - coi.Start.Value, 1]);
+                }
+            }
         }
 
         // Caller is responsible for marking the path as dirty if necessary
         public void AddToTree(TreeAttribute geneticsTree) {
             if (Autosomal.Length == 0) {
                 geneticsTree.RemoveAttribute("autosomal");
+                geneticsTree.RemoveAttribute("autosomalNames");
             }
             else {
                 geneticsTree.SetAttribute("autosomal", new ByteArray2DAttribute(Autosomal));
+                geneticsTree.SetAttribute("autosomalNames", new StringArrayAttribute(Type.Autosomal.geneArray));
             }
             if (Anonymous.Length == 0) {
                 geneticsTree.RemoveAttribute("anonymous");
+                geneticsTree.RemoveAttribute("anonymousNames"); // Bit of an oxymoron
+                geneticsTree.RemoveAttribute("anonymousLengths");
             }
             else {
                 geneticsTree.SetAttribute("anonymous", new ByteArray2DAttribute(Anonymous));
+                geneticsTree.SetAttribute("anonymousNames", new StringArrayAttribute(Type.Anonymous.GroupNames));
+                geneticsTree.SetAttribute("anonymousLengths", new IntArrayAttribute(Type.Anonymous.GroupSizes));
             }
             if (Bitwise.Length == 0) {
                 geneticsTree.RemoveAttribute("bitwise");
+                geneticsTree.RemoveAttribute("bitwiseNames");
+                geneticsTree.RemoveAttribute("bitwiseLengths");
             }
             else {
                 geneticsTree.SetAttribute("bitwise", new ByteArrayAttribute(Bitwise));
+                geneticsTree.SetAttribute("bitwiseNames", new StringArrayAttribute(Type.Bitwise.GroupNames));
+                geneticsTree.SetAttribute("bitwiseLengths", new IntArrayAttribute(Type.Bitwise.GroupSizes));
             }
-            // Set XZ regardless of whether the length is 0 or not
+            // Set XZ regardless of whether the length is 0 or not, because we want to know how many X or Z chromosomes are present
+            // A mod could add sex-linked genes later, so it's useful even if there are none now
             geneticsTree.SetAttribute("xz", new ByteArray2DAttribute(XZ));
+            geneticsTree.SetAttribute("xzNames", new StringArrayAttribute(Type.XZ.geneArray));
             geneticsTree.SetBool("heterogametic", XZ.GetLength(1) != Ploidy);
         }
 

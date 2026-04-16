@@ -8,7 +8,7 @@ namespace Genelib {
     public struct NameMapping {
         private Dictionary<string, int> geneMap;
         [ProtoMember(1)]
-        private string[] geneArray;
+        internal string[] geneArray;
         private string[][] alleleArrays;
         private Dictionary<string, byte>[] alleleMaps;
 
