@@ -6,7 +6,7 @@ namespace Genelib
 {
     public class ByteArray2DAttribute : Array2DAttribute<byte>, IAttribute
     {
-        private const int AttributeID = 4542;
+        internal const int AttributeID = 190;
 
         public ByteArray2DAttribute()
         {

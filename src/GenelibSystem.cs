@@ -68,6 +68,8 @@ namespace Genelib
             api.RegisterEntityBehaviorClass(GeneticMultiply.Code, typeof(GeneticMultiply));
             api.RegisterEntityBehaviorClass(BehaviorAnimalInfo.Code, typeof(BehaviorAnimalInfo));
 
+            TreeAttribute.RegisterAttribute(ByteArray2DAttribute.AttributeID, typeof(ByteArray2DAttribute));
+
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
 
             GenelibConfig.Load(api);
