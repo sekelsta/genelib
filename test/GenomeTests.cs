@@ -1,6 +1,7 @@
 using Genelib;
 using NUnit.Framework;
 using System;
+using System.IO;
 using System.Text;
 using Vintagestory.API.Datastructures;
 using Vintagestory.Common;
@@ -15,16 +16,19 @@ namespace Genelib.Test {
         public void Setup()
         {
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
+            GenomeType.RegisterInterpreter(new StubEquusInterpreter());
 
             string mammal = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, secondsies: {autosomal: { extension: { default: \"black\" }, tyrosinase: { default: \"white\" }, }, xz: { xlinked1: { default: \"b\" }, xlinked2: { default: \"b\" }, } } }}";
             GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(mammal), "mammal", null));
 
             string bird = "{ genes: { autosomal: [ { extension: [\"wildtype\", \"black\", \"red\"] }, { tyrosinase: [\"wildtype\", \"white\"] }, ], xz: [ { xlinked1: [\"a\", \"b\"] }, { xlinked2: [\"a\", \"b\"] }, ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"zw\", initializers: { defaultinitializer: {} }}";
-            GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(bird), "bird", null));  
+            GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(bird), "bird", null));
 
             // Note the probabilities in bitwise initializers are listed per gene in the group, with the final one being used for all remaining genes
-            string bitwise = "{ genes: { anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 }, { strength: 8 }, { stamina: 4 }, { energy: 64 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, allzeros: { bitwise: { coi: [0], strength: [0], stamina: [0], energy: [0] } }, allones: { bitwise: { coi: [1], strength: [1], stamina: [1], energy: [1] } }, mixed: { bitwise: { strength: [0.0, 1.0, 0.2, 0.3, 0.4, 1.0], stamina: [0, 0.2, 0.8, 1], energy: [0, 0.8] } } }}";   
-            GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(bitwise), "bitwise", null));         
+            string bitwise = "{ genes: { anonymous: [ { deleterious: 16 } ], bitwise: [ { coi: 128 }, { strength: 8 }, { stamina: 4 }, { energy: 64 } ], }, interpreters: [ \"Polygenes\" ], sexdetermination: \"xy\", initializers: { defaultinitializer: {}, allzeros: { bitwise: { coi: [0], strength: [0], stamina: [0], energy: [0] } }, allones: { bitwise: { coi: [1], strength: [1], stamina: [1], energy: [1] } }, mixed: { bitwise: { strength: [0.0, 1.0, 0.2, 0.3, 0.4, 1.0], stamina: [0, 0.2, 0.8, 1], energy: [0, 0.8] } } }}";
+            GenomeType.Load(new Asset(Encoding.ASCII.GetBytes(bitwise), "bitwise", null));
+
+            GenelibConfig.Instance = new GenelibConfig();
         }
 
         [Test]
@@ -116,6 +120,24 @@ namespace Genelib.Test {
         }
 
         [Test]
+        public void Genome_EquineIsViable()
+        {
+            Random random = new Random(SEED);
+            string json = File.ReadAllText(Path.Combine(TestContext.CurrentContext.TestDirectory, "testassets", "equine.json"));
+            GenomeType.Load(new Asset(Encoding.UTF8.GetBytes(json), "equine", null));
+            GenomeType equine = GenomeType.Get("equine");
+            GeneInitializer initializer = equine.Initializer("colorful");
+            Genome genome = new Genome(initializer, false, random);
+            genome.Mutate(GenelibConfig.MutationRate, random);
+            foreach (GeneInterpreter interpreter in genome.Type.Interpreters) {
+                interpreter.FinalizeSpawn(genome, initializer, random);
+            }
+            Assert.IsFalse(genome.IsEmbryonicLethal(), "Newly generated equine genome should be viable");
+            Range range = genome.Type.Anonymous.TryGetRange("deleterious");
+            Assert.AreEqual(16, range.End.Value - range.Start.Value);
+        }
+
+        [Test]
         public void Genome_GenerateWithBitwiseInitializers()
         {
             GenomeType bitwise = GenomeType.Get("bitwise");
@@ -181,5 +203,11 @@ namespace Genelib.Test {
             // Every recessive is a homozygote, but not every homozygote is a recessive
             Assert.Greater(mixedHomozygotes, mixedRecessive);
         }
+    }
+
+    // Placeholder so that genome types referencing the Equus interpreter can be loaded in tests
+    internal class StubEquusInterpreter : GeneInterpreter {
+        public string Name => "Equus";
+        public void Interpret(EntityBehaviorGenetics genetics) { }
     }
 }

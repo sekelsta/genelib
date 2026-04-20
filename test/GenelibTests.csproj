@@ -53,4 +53,10 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.4.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="testassets/**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

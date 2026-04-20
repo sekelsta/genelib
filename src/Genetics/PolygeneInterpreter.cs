@@ -28,7 +28,7 @@ namespace Genelib {
             for (int gene = range.Start.Value; gene < range.End.Value; ++gene) {
                 bool homozygous = true;
                 for (int n = 0; n < genome.Ploidy; ++n) {
-                    homozygous = homozygous && genome.Anonymous[gene, n] == genome.Anonymous[gene, 0];
+                    homozygous = homozygous && genome.Anonymous[gene, n] != genome.Anonymous[gene, 0];
                 }
                 if (homozygous) duplicates += 1;
             }
@@ -47,7 +47,7 @@ namespace Genelib {
             int numGenes = range.End.Value - range.Start.Value;
             if (numGenes > 0) {
                 int repeats = genome.BitwiseHomozygotes(range);
-                float coi = repeats / (float)numGenes;
+                float coi = 2 * (repeats - numGenes) / (float)numGenes;
                 entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
             }
         }
