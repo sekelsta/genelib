@@ -24,10 +24,8 @@ namespace Genelib {
         [ProtoMember(2)]
         public NameMapping XZ { get; protected set; }
         [ProtoMember(3)]
-        public NameMapping YW { get; protected set; }
-        [ProtoMember(4)]
         public NameGroupMapping Anonymous { get; protected set; }
-        [ProtoMember(5)]
+        [ProtoMember(4)]
         public NameGroupMapping Bitwise { get; protected set; }
 
         // Not serialized, so make sure not to try accessing from client
@@ -35,13 +33,13 @@ namespace Genelib {
         public GeneInitializer? DefaultInitializer;
         public GeneInterpreter[] Interpreters { get; protected set; }
 
-        [ProtoMember(6)]
+        [ProtoMember(5)]
         public SexDetermination SexDetermination { get; protected set; } = SexDetermination.XY;
 
-        [ProtoMember(7)]
+        [ProtoMember(6)]
         public string Name { get; private set; }
 
-        [ProtoMember(8)]
+        [ProtoMember(7)]
         public string[] InterpreterNames {
             get => Interpreters.Select(x => x.Name).ToArray();
             set => Interpreters = value.Select(x => interpreterMap[x]).ToArray();
