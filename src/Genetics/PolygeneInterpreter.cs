@@ -47,7 +47,7 @@ namespace Genelib {
             int numGenes = range.End.Value - range.Start.Value;
             if (numGenes > 0) {
                 int repeats = genome.BitwiseHomozygotes(range);
-                float coi = 2 * (repeats - numGenes) / (float)numGenes;
+                float coi = (2 * repeats - numGenes) / (float)numGenes;
                 entity.WatchedAttributes.GetOrAddTreeAttribute("genetics").SetFloat("coi", coi);
             }
         }
