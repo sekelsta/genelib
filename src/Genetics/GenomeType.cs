@@ -14,9 +14,25 @@ namespace Genelib {
         internal static bool assetsReceived = false;
         internal static Dictionary<AssetLocation, GenomeType> loaded = new Dictionary<AssetLocation, GenomeType>();
         private static Dictionary<string, GeneInterpreter> interpreterMap = new Dictionary<string, GeneInterpreter>();
+        private static FastSmallDictionary<string, System.Func<JsonObject, GenomeType, string, GeneInterpreter>> factoryMap = new(1);
 
         public static void RegisterInterpreter(GeneInterpreter interpreter) {
             interpreterMap[interpreter.Name] = interpreter;
+        }
+
+        public static void RegisterInterpreter(string code, System.Func<JsonObject, GenomeType, string, GeneInterpreter> factory) {
+            factoryMap[code] = factory;
+        }
+
+        public GeneInterpreter GetInterpreter(JsonObject config, string domain) {
+            string code = config["code"].AsString() ?? throw new ArgumentException("Missing 'code' in extraInterpreters");
+            if (interpreterMap.TryGetValue(code, out GeneInterpreter? result)) {
+                return result;
+            }
+            if (factoryMap.TryGetValue(code, out var factory)) {
+                return factory(config, this, domain);
+            }
+            throw new ArgumentException("No registered genome interpreter with code " + code);
         }
 
         [ProtoMember(1)]

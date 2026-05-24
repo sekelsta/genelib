@@ -24,6 +24,9 @@ namespace Genelib {
         }
         protected string[]? initializers;
         protected GeneInitializer defaultInitializer = null!;
+        protected GeneInterpreter[]? extraInterpreters;
+
+        public IEnumerable<GeneInterpreter> AllInterpreters => Genome.Type.Interpreters.Concat(extraInterpreters ?? Enumerable.Empty<GeneInterpreter>());
 
         public EntityBehaviorGenetics(Entity entity) : base(entity) { }
 
@@ -36,6 +39,19 @@ namespace Genelib {
             defaultInitializer = definit == null ? GenomeType.DefaultInitializer : GenomeType.Initializer(definit);
 
             initializers = attributes["initializers"].AsArray<string>()?.Select(x => x ?? throw new ArgumentNullException("entry in initializers list for entity with code " + entity.Code)).ToArray();
+
+            JsonObject?[]? jsonInterpreters = attributes["extraInterpreters"].AsArray();
+            if (jsonInterpreters != null) {
+                try {
+                    extraInterpreters = new GeneInterpreter[jsonInterpreters.Length];
+                    for (int i = 0; i < jsonInterpreters.Length; ++i) {
+                        extraInterpreters[i] = GenomeType.GetInterpreter(jsonInterpreters[i], entity.Code);
+                    }
+                }
+                catch (Exception e) {
+                    entity.Api.Logger.Warning("Error while setting up extraInterpreters on genetics behavior of " + entity.Code);
+                }
+            }
 
             TreeAttribute geneticsTree = (TreeAttribute) entity.WatchedAttributes.GetTreeAttribute("genetics");
             if (geneticsTree != null) {
@@ -57,16 +73,16 @@ namespace Genelib {
                         // Note the API does not provide a good way to distinguish between loading from save or spawning 
                         // at worldgen. So assume we are 
                         // creating genetics for a previously existing entity. Set genes to match phenotype.
-                        foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+                        foreach (GeneInterpreter interpreter in AllInterpreters) {
                             interpreter.MatchPhenotype(this);
                         }
                     }
-                    foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+                    foreach (GeneInterpreter interpreter in AllInterpreters) {
                         interpreter.FinalizeSpawn(Genome, initializer, random);
                     }
                 }
             }
-            foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+            foreach (GeneInterpreter interpreter in AllInterpreters) {
                 interpreter.Interpret(this);
             }
         }
@@ -86,7 +102,7 @@ namespace Genelib {
             if (clientAPI == null) return;
 
             List<(AssetLocation, Shape)>? overlays = null;
-            foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+            foreach (GeneInterpreter interpreter in AllInterpreters) {
                 interpreter.PrepareShape(this, ref overlays, shapePathForLogging, ref willDeleteElements);
             }
 
@@ -124,7 +140,7 @@ namespace Genelib {
 
         public override ITexPositionSource? GetTextureSource(ref EnumHandling handling) {
             ITexPositionSource? source = null;
-            foreach (GeneInterpreter interpreter in Genome.Type.Interpreters) {
+            foreach (GeneInterpreter interpreter in AllInterpreters) {
                 source = interpreter.GetTextureSource(this, ref handling);
                 if (handling == EnumHandling.PreventSubsequent) {
                     return source;
