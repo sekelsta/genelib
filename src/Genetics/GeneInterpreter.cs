@@ -37,6 +37,10 @@ namespace Genelib {
             // Do nothing
         }
 
+        void GatherTextureOverlays(EntityBehaviorGenetics genetics, ref List<BlendedOverlayTexture>? overlays, string material) {
+            // Do nothing
+        }
+
         ITexPositionSource? GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
             return null;
         }

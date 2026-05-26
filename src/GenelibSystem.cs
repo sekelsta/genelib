@@ -71,6 +71,7 @@ namespace Genelib
             TreeAttribute.RegisterAttribute(ByteArray2DAttribute.AttributeID, typeof(ByteArray2DAttribute));
 
             GenomeType.RegisterInterpreter(new PolygeneInterpreter());
+            GenomeType.RegisterInterpreter("TextureOverlay", (json, type, forCode) => new TextureOverlayInterpreter(json, type, forCode));
 
             GenelibConfig.Load(api);
 

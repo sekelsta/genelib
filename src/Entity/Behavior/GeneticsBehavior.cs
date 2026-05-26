@@ -146,7 +146,37 @@ namespace Genelib {
                     return source;
                 }
             }
-            return source;
+
+            if (handling == EnumHandling.PreventDefault) return source;
+
+            foreach (var entry in entity.Properties.Client.Textures) {
+                string material = entry.Key;
+                BakedCompositeTexture baked = entry.Value.Baked;
+                if (baked.BakedVariants != null && baked.BakedVariants.Length > 0) {
+                    int variant = entity.WatchedAttributes.GetInt("textureIndex", 0) % baked.BakedVariants.Length;
+                    ApplyOverlays(baked.BakedVariants[variant], material);
+                }
+                else {
+                    ApplyOverlays(entry.Value.Baked, entry.Key);
+                }
+            }
+
+            return null;
+        }
+
+        public void ApplyOverlays(BakedCompositeTexture baseTexture, string material) {
+            List<BlendedOverlayTexture>? textureOverlays = null;
+            foreach (GeneInterpreter interpreter in AllInterpreters) {
+                interpreter.GatherTextureOverlays(this, ref textureOverlays, material);
+            }
+
+            if (textureOverlays == null || textureOverlays.Count == 0) return;
+
+            CompositeTexture blended = new CompositeTexture(baseTexture.BakedName);
+            blended.BlendedOverlays = textureOverlays.ToArray();
+            if (((ICoreClientAPI)entity.Api).EntityTextureAtlas.GetOrInsertTexture(blended, out int subId, out _)) {
+                baseTexture.TextureSubId = subId;
+            }
         }
 
         public override string PropertyName() => Code;
