@@ -27,7 +27,7 @@ namespace Genelib {
                     byte allele = genes[GeneID, n];
 
                     if (OtherAlleleID != -1 && allele != OtherAlleleID && (mainFound || allele != AlleleID)) {
-                        return !Invert;
+                        return Invert;
                     }
 
                     mainFound = mainFound || allele == AlleleID;
