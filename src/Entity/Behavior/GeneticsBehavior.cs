@@ -171,8 +171,9 @@ namespace Genelib {
 
                 CompositeTexture texture = textures[material];
                 mapping[material] = texture.Baked.TextureSubId;
+                int variant = 0;
                 if (texture.Alternates != null && texture.Alternates.Count() > 0) {
-                    int variant = entity.WatchedAttributes.GetInt("textureIndex", 0) % (texture.Alternates.Count() + 1);
+                    variant = entity.WatchedAttributes.GetInt("textureIndex", 0) % (texture.Alternates.Count() + 1);
                     if (entity.WatchedAttributes.HasAttribute(material + "TextureIndex")) {
                         variant = entity.WatchedAttributes.GetInt(material + "TextureIndex", 0) % (texture.Alternates.Count() + 1);
                     }
@@ -185,7 +186,8 @@ namespace Genelib {
                 anyOverlay = true;
                 handling = EnumHandling.PreventSubsequent;
 
-                CompositeTexture blended = new CompositeTexture(texture.Baked.BakedName); // TODO: Need to choose a different name!
+                AssetLocation baseName = variant == 0 ? texture.Baked.BakedName : texture.Baked.BakedVariants[variant - 1].BakedName;
+                CompositeTexture blended = new CompositeTexture(baseName);
                 blended.BlendedOverlays = textureOverlays.ToArray();
                 if (capi.EntityTextureAtlas.GetOrInsertTexture(blended, out int subId, out _)) {
                     mapping[material] = subId;
