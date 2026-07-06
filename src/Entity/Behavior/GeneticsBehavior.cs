@@ -9,6 +9,15 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
+
+using Genelib;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
+using Vintagestory.Client.NoObf;
+using Vintagestory.GameContent;
+
 namespace Genelib {
     public class EntityBehaviorGenetics : EntityBehavior {
         public const string Code = "genelib.genetics";
@@ -149,34 +158,45 @@ namespace Genelib {
 
             if (handling == EnumHandling.PreventDefault) return source;
 
-            foreach (var entry in entity.Properties.Client.Textures) {
-                string material = entry.Key;
-                BakedCompositeTexture baked = entry.Value.Baked;
-                if (baked.BakedVariants != null && baked.BakedVariants.Length > 0) {
-                    int variant = entity.WatchedAttributes.GetInt("textureIndex", 0) % baked.BakedVariants.Length;
-                    ApplyOverlays(baked.BakedVariants[variant], material);
+            MiniDictionary mapping = new MiniDictionary(entity.Properties.Client.Textures.Count);
+            bool anyOverlay = false;
+
+            var capi = (ICoreClientAPI)entity.Api;
+            IDictionary<string, CompositeTexture> textures = entity.Properties.Client.Textures;
+            foreach (string material in textures.Keys) {
+                List<BlendedOverlayTexture>? textureOverlays = null;
+                foreach (GeneInterpreter interpreter in AllInterpreters) {
+                    interpreter.GatherTextureOverlays(this, ref textureOverlays, material);
                 }
-                else {
-                    ApplyOverlays(entry.Value.Baked, entry.Key);
+
+                CompositeTexture texture = textures[material];
+                mapping[material] = texture.Baked.TextureSubId;
+                if (texture.Alternates != null && texture.Alternates.Count() > 0) {
+                    int variant = entity.WatchedAttributes.GetInt("textureIndex", 0) % (texture.Alternates.Count() + 1);
+                    if (entity.WatchedAttributes.HasAttribute(material + "TextureIndex")) {
+                        variant = entity.WatchedAttributes.GetInt(material + "TextureIndex", 0) % (texture.Alternates.Count() + 1);
+                    }
+                    if (variant > 0) {
+                        mapping[material] = texture.Baked.BakedVariants[variant].TextureSubId;
+                    }
                 }
+
+                if (textureOverlays == null || textureOverlays.Count == 0) continue;
+                anyOverlay = true;
+                handling = EnumHandling.PreventSubsequent;
+
+                CompositeTexture blended = new CompositeTexture(texture.Baked.BakedName); // TODO: Need to choose a different name!
+                blended.BlendedOverlays = textureOverlays.ToArray();
+                if (capi.EntityTextureAtlas.GetOrInsertTexture(blended, out int subId, out _)) {
+                    mapping[material] = subId;
+                }
+            }
+
+            if (anyOverlay) {
+                return new DictionaryTextureSource() { Mapping = mapping, Atlas = capi.EntityTextureAtlas };
             }
 
             return null;
-        }
-
-        public void ApplyOverlays(BakedCompositeTexture baseTexture, string material) {
-            List<BlendedOverlayTexture>? textureOverlays = null;
-            foreach (GeneInterpreter interpreter in AllInterpreters) {
-                interpreter.GatherTextureOverlays(this, ref textureOverlays, material);
-            }
-
-            if (textureOverlays == null || textureOverlays.Count == 0) return;
-
-            CompositeTexture blended = new CompositeTexture(baseTexture.BakedName);
-            blended.BlendedOverlays = textureOverlays.ToArray();
-            if (((ICoreClientAPI)entity.Api).EntityTextureAtlas.GetOrInsertTexture(blended, out int subId, out _)) {
-                baseTexture.TextureSubId = subId;
-            }
         }
 
         public override string PropertyName() => Code;
