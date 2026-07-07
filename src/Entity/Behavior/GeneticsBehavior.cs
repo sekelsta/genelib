@@ -186,7 +186,8 @@ namespace Genelib {
                 anyOverlay = true;
                 handling = EnumHandling.PreventSubsequent;
 
-                AssetLocation baseName = variant == 0 ? texture.Baked.BakedName : texture.Baked.BakedVariants[variant - 1].BakedName;
+                // Unlike alternates, baked variants use an index matching the total number of textures
+                AssetLocation baseName = variant == 0 ? texture.Baked.BakedName : texture.Baked.BakedVariants[variant].BakedName;
                 CompositeTexture blended = new CompositeTexture(baseName);
                 blended.BlendedOverlays = textureOverlays.ToArray();
                 if (capi.EntityTextureAtlas.GetOrInsertTexture(blended, out int subId, out _)) {
