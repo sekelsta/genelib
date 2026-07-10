@@ -202,6 +202,14 @@ namespace Genelib {
             return null;
         }
 
+        public List<string> ListPhenotype() {
+            List<string> phenotypeStrings = new();
+            foreach (GeneInterpreter interpreter in AllInterpreters) {
+                interpreter.ListPhenotype(this, phenotypeStrings);
+            }
+            return phenotypeStrings;
+        }
+
         public override string PropertyName() => Code;
     }
 }

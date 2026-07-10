@@ -44,5 +44,10 @@ namespace Genelib {
         ITexPositionSource? GetTextureSource(EntityBehaviorGenetics genetics, ref EnumHandling handling) {
             return null;
         }
+
+        // Clientside. Adds pre-translated strings to the list passed in, or potentially removes or replaces them.
+        void ListPhenotype(EntityBehaviorGenetics genetics, List<string> descriptions) {
+            // Do nothing
+        }
     }
 }

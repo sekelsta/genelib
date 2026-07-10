@@ -24,6 +24,9 @@
     "gui-animalinfo-tab-info": "Info",
     "gui-animalinfo-tab-status": "Status",
     "gui-hotkey-animalinfo": "Open animal profile",
+    "animalinfo-coatcolor": "Coat color: {0}",
+    "animalinfo-basecoat": "Base coat: {0}",
+    "animalinfo-pattern": "Pattern: {0}",
 
     "infotext-multiply-pregnancy": "{0} days pregnant, of {1} on average",
     "infotext-multiply-earlypregnancy": "Might be pregnant",
@@ -84,4 +87,32 @@
     "month-december-early": "early December",
     "month-december-mid": "mid-December",
     "month-december-late": "late December",
+
+    "horsecoat-doublecream": "Cream",
+
+    "horsecoat-bay": "Bay",
+    "horsecoat-bay-mealy": "Mealy bay",
+    "horsecoat-black": "Black",
+    "horsecoat-chestnut": "Chestnut",
+    "horsecoat-chestnut-mealy": "Mealy chestnut",
+
+    "horsecoat-bay-dun": "Dun",
+    "horsecoat-chestnut-dun": "Red dun",
+    "horsecoat-black-dun": "Grullo",
+
+    "horsecoat-chestnut-cream": "Palomino",
+    "horsecoat-bay-cream": "Buckskin",
+    "horsecoat-bay-dun-cream": "Dunkskin",
+    "horsecoat-chestnut-dun-cream": "Dunalino",
+
+    "horsecoat-bay-roan": "Red roan",
+    "horsecoat-chestnut-roan": "Strawberry roan",
+    "horsecoat-black-roan": "Blue roan",
+    "horsecoat-chestnut-cream-roan": "Honey roan",
+    "horsecoat-other-roan": "{0} roan",
+
+    "horsecoat-tobiano": "Tobiano",
+    "horsecoat-pintaloosa": "Pintaloosa",
+    "horsecoat-snowcap": "Snowcap",
+    "horsecoat-spottedblanket": "Spotted blanket",
 }

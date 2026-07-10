@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using Genelib.Network;
 using Genelib.Extensions;
@@ -141,6 +142,15 @@ namespace Genelib {
                     SingleComposer.AddStaticText(coiText, infoFont, ElementBounds.Fixed(0, y, Width, 25));
                     string desc = Lang.Get("genelib:gui-animalinfo-inbreedingcoefficient-desc");
                     SingleComposer.AddAutoSizeHoverText(desc, CairoFont.WhiteDetailText(), 350, ElementBounds.Fixed(0, y, Width, 25), "hoverCOI");
+                    y += 25;
+                }
+            }
+
+            EntityBehaviorGenetics? geneticsBehavior = Animal.GetBehavior<EntityBehaviorGenetics>();
+            if (geneticsBehavior != null) {
+                List<string> phenotypeStrings = geneticsBehavior.ListPhenotype();
+                foreach (string s in phenotypeStrings) {
+                    SingleComposer.AddStaticText(s, infoFont, ElementBounds.Fixed(0, y, Width, 25));
                     y += 25;
                 }
             }
