@@ -51,6 +51,12 @@
             { "cameo": ["wildtype", "cameo"] },
             { "donkey-roan": ["wildtype", "roan"] },
             { "tyger": ["normal", "tyger"] },
+            { "mealy-legs": ["dark", "light"] },
+
+            { "quagga": ["normal", "quagga"] },
+            { "zebra-polka": ["wildtype", "spotted"] },
+            { "zebra-blond": ["wildtype", "blond"] },
+            { "zebra-maneless": ["wildtype", "blond"] },
 
             { "LCORL": ["wildtype", "large"] },
             { "HMGA2": ["wildtype", "small"] },
@@ -73,6 +79,7 @@
             { "eye-shade-brown": 4 },
             { "double-ovulation": 4 },
             { "grey-speed": 8 },
+            { "stripe-suppression": 8 }, // https://www.ioes.ucla.edu/news/zebra-changed-stripes-evolution-stripe-variation-plains-zebra/
         ],
     },
     "interpreters": [ "Polygenes" ],
