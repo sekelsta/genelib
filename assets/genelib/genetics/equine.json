@@ -1,23 +1,41 @@
 {
     "genes": {
         "autosomal": [
-            { "agouti": ["wildtype", "black"] },
-            { "extension": ["wildtype", "red"] },
-            { "dun": [ "dun", "nondun" ] },
-            { "cream": ["wildtype", "cream"] },
+            { "agouti": ["wildtype", "black", "donkey-black"] },
+            { "extension": ["wildtype", "red", "altred", "donkey-red"] },
+            { "dun": [ "dun", "nondun", "striped", "lightdun", "darkdun" ] },
+            { "cream": ["wildtype", "cream", "pearl", "sunshine", "snowdrop", "buttermilk"] },
             { "leopard": ["wildtype", "leopard"] },
             { "mealy": ["mealy", "nonmealy"] },
             { "roan": ["wildtype", "roan"] },
             { "tobiano":["wildtype", "tobiano"] },
-            { "grey": ["wildtype", "grey"] },
+            { "grey": ["wildtype", "grey", "slowgrey"] },
             { "star": ["wildtype", "star"] },
             { "socks": ["wildtype", "socks"] },
+            { "silver": ["wildtype", "silver"] },
+            { "PATN1": ["wildtype", "PATN1"] },
+            { "champagne": ["wildtype", "champagne"] },
+            { "mushroom": ["wildtype", "mushroom"] },
+            { "frame": ["wildtype", "frame"] },
+            { "sabino": ["wildtype", "Sb1", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15", "W16", "W17", "W18", "W19", "W20", "W21", "W22", "W23", "W24", "W25", "W26", "W27", "W28", "W30", "W31", "W32", "W33", "W34", "W35"] },
+            { "MITF": ["wildtype", "SW1", "SW3", "Macchiato", "SW5"] },
+            { "PAX3": ["wildtype", "SW2", "SW4"] },
+            { "tiger-eye": ["wildtype", "TE1", "TE2"] },
+            { "flaxen": ["wildtype", "flaxen"] },
+            { "haircycle": ["ticked", "black"] },
+            { "manchado": ["wildtype", "manchado"] },
+            { "rabicano": ["wildtype", "rabicano"] },
+            { "leopardshrink": ["normal", "suppressed"] }, // https://equinetapestry.wordpress.com/2011/05/15/suppressed-leopards/
+            { "bronze": ["normal", "bronze"] }, // https://equinetapestry.wordpress.com/2012/03/08/appaloosa-color-shifting/
+            { "lightblack": ["wildtype", "light"] }, // https://web.archive.org/web/20101103205450/http://newdilutions.com/light_black/ali-zeus.htm
+            { "fadingblack": ["normal", "fading"] },
         ],
         "anonymous": [
             { "deleterious": 16 },
         ],
         "bitwise": [
             { "coi": 256 },
+            { "patn": 8 },
         ],
     },
     "interpreters": [ "Polygenes" ],
