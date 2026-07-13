@@ -3,27 +3,36 @@
         "autosomal": [
             { "agouti": ["wildtype", "black", "donkey-black"] },
             { "extension": ["wildtype", "red", "altred", "donkey-red"] },
-            { "dun": [ "dun", "nondun", "striped", "lightdun", "darkdun" ] },
+            { "dun": [ "dun", "nondun", "striped", "donkey-striped", "donkey-nondun", "lightdun", "darkdun" ] },
             { "cream": ["wildtype", "cream", "pearl", "sunshine", "snowdrop", "donkey-ivory", "buttermilk"] },
             { "leopard": ["wildtype", "leopard"] },
             { "mealy": ["mealy", "nonmealy"] },
-            { "roan": ["wildtype", "roan"] },
-            { "tobiano":["wildtype", "tobiano"] },
+            // catchabird: see https://www.whitehorseproductions.com/tbcolor_roan.html
+            // frostyroan: White hairs in body, mane, and tail, such as https://commons.wikimedia.org/wiki/File:Brabanter.jpg
+            // frosty: roan-like only on mane and tail, like Shquesta in https://www.equinetapestry.blog/more-flaxen-maned-bays/
+            // silvertail: AKA Gulastra's plume, see https://www.equinetapestry.blog/gulastras-plume/
+            { "roan": ["wildtype", "roan", "catchabird", "rabicano", "frostyroan", "frosty", "silvertail"] },
+            { "tobiano": ["wildtype", "tobiano"] },
             { "grey": ["wildtype", "grey", "slowgrey"] },
-            { "star": ["wildtype", "star"] },
+            { "star": ["wildtype", "star", "donkey-star", "donkey-starsnip"] },
             { "socks": ["wildtype", "socks"] },
-            { "silver": ["wildtype", "silver"] },
-            { "PATN1": ["wildtype", "PATN1"] },
-            { "champagne": ["wildtype", "champagne"] },
-            { "mushroom": ["wildtype", "mushroom"] },
+            { "KIT": [
+                "wildtype",
+                "donkey-white", "donkey-spotting",
+                // W12 and W29 skipped deliberately
+                "Sb1", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W13", "W14", "W15", "W16", "W17", "W18", "W19", "W20", "W21", "W22", "W23", "W24", "W25", "W26", "W27", "W28", "W30", "W31", "W32", "W33", "W34", "W35"]
+            },
             { "frame": ["wildtype", "frame"] },
-            { "sabino": ["wildtype", "donkey-white", "donkey-spotting", "Sb1", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W13", "W14", "W15", "W16", "W17", "W18", "W19", "W20", "W21", "W22", "W23", "W24", "W25", "W26", "W27", "W28", "W30", "W31", "W32", "W33", "W34", "W35"] },
             { "MITF": ["wildtype", "SW1", "SW3", "Macchiato", "SW5"] },
             { "PAX3": ["wildtype", "SW2", "SW4"] },
+            { "PATN1": ["wildtype", "PATN1"] },
+            { "silver": ["wildtype", "silver"] },
+            { "champagne": ["wildtype", "champagne"] },
+            { "mushroom": ["wildtype", "mushroom"] },
+            { "tyrosinase": ["wildtype", "donkey-albino"] },
             { "tiger-eye": ["wildtype", "TE1", "TE2"] },
             { "flaxen": ["wildtype", "flaxen"] },
             { "manchado": ["wildtype", "manchado"] },
-            { "rabicano": ["wildtype", "rabicano"] },
             { "bider": ["normal", "bider"] }, // https://www.jstage.jst.go.jp/article/jes/18/4/18_4_145/_article
             { "leopardshrink": ["normal", "suppressed"] }, // https://equinetapestry.wordpress.com/2011/05/15/suppressed-leopards/
             { "peacock": ["wildtype", "peacock"] },
@@ -32,18 +41,23 @@
             { "lightblack": ["wildtype", "light"] }, // https://web.archive.org/web/20101103205450/http://newdilutions.com/light_black/ali-zeus.htm
             { "fadingblack": ["normal", "fading"] },
             { "agouticycle": ["ticked", "black"] },
-            { "agoutiventral": ["normal", "large", "small"]},
+            { "agoutiventral": ["normal", "large", "small"] },
+            { "tostado": ["normal", "dark"]},
             { "stripewidth": ["wildtype", "wide", "narrow"] },
             { "legstripes": ["striped", "nonstriped"] },
             { "shoulderstripe": ["none", "some", "extreme"] },
             { "dunshade": ["wildtype", "dark", "light"] },
-            { "redsooty": ["normal", "sooty", "verydark"] },
-            { "ermine": ["normal", "ermine"] },
+            { "redsooty": ["normal", "sooty", "verydark"] }, // "verydark" could potentially darken with age, like black bay seen in Arabians and extreme sooty morgans
+            { "whitehindlegs": ["wildtype", "white", "morewhite"] },
+            { "whiteforelegs": ["wildtype", "white"] },
+            { "whitenose": ["wildtype", "white", "morewhite"] },
+            // suppressed = cryptic tobiano huculs
+            // donkey masked spotting factor: https://www.lovelongears.com/spottedpix.html
+            { "white-suppression": ["normal", "suppressed", "donkey-masked-spotting"] },
+            { "ermine": ["normal", "spotted"] },
             { "chex": ["wildtype", "spotted"] }, // See EMH Top Dun Chex and his foals
-            { "tyrosinase": ["wildtype", "donkey-albino"] },
             { "mehlwood-marybelle": ["wildtype", "dilute"] }, // https://www.morganhorse.com/upload/photos/904TMH_AprilMay15_ATouchOfPastel.pdf
             { "bend-or": ["wildtype", "spotted"] },
-            { "silvertail": ["wildtype", "silver"] }, // https://www.equinetapestry.blog/gulastras-plume/
             { "lowpoint": ["normal", "low"] }, // AKA wild bay
             { "birdcatcher": ["normal", "spotted"] },
             { "lacing": ["wildtype", "laced"] },
@@ -61,6 +75,15 @@
             { "LCORL": ["wildtype", "large"] },
             { "HMGA2": ["wildtype", "small"] },
             { "gait": ["wildtype", "gaited"] },
+        ],
+        "autosomalLinkage": [
+            { "agoutiventral": 0.01 },
+            { "agouticycle": 0.01 },
+            { "agouti": 0.5 },
+            { "extension": 0.03 },
+            { "KIT": 0.01 },
+            { "roan": 0.01 },
+            { "tobiano": 0.5 },
         ],
         "sexlinked": [
             { "brindle-texture": ["wildtype", "brindle"] }
