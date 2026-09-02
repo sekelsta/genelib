@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -11,23 +10,40 @@ namespace Genelib {
 
         public virtual bool Equals(IWorldAccessor worldForResolve, IAttribute attr)
         {
+            if (attr == null) return false;
+
             object othervalue = attr.GetValue();
-            if (!othervalue.GetType().IsArray) return false;
+            if (othervalue == null || !othervalue.GetType().IsArray) return false;
 
-            IList a = (IList)value;
-            IList b = (IList)othervalue;
+            if (othervalue is not Array otherArray) return false;
 
-            if (a.Count != b.Count) return false;
+            if (value == null) return false;
 
-            for (int i = 0; i < a.Count; i++)
+            // Ensure both are 2D arrays and dimensions match
+            if (value.Rank != 2 || otherArray.Rank != 2) return false;
+
+            int rowsA = value.GetLength(0);
+            int colsA = value.GetLength(1);
+            int rowsB = otherArray.GetLength(0);
+            int colsB = otherArray.GetLength(1);
+
+            if (rowsA != rowsB || colsA != colsB) return false;
+
+            for (int i = 0; i < rowsA; i++)
             {
-                if (a[i] == null)
+                for (int j = 0; j < colsA; j++)
                 {
-                    if (b[i] != null) return false;
-                }
-                else if (!a[i]!.Equals(b[i]))
-                {
-                    if (!EqualityUtil.NumberEquals(a[i], b[i])) return false;
+                    object? valA = value[i, j];
+                    object? valB = otherArray.GetValue(i, j);
+
+                    if (valA == null)
+                    {
+                        if (valB != null) return false;
+                    }
+                    else if (!valA.Equals(valB))
+                    {
+                        if (!EqualityUtil.NumberEquals(valA, valB)) return false;
+                    }
                 }
             }
 
