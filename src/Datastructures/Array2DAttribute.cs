@@ -9,25 +9,28 @@ namespace Genelib {
     public class Array2DAttribute<T> {
         public T[,] value = null!;
 
-        public virtual bool Equals(IWorldAccessor worldForResolve, IAttribute attr)
+        public virtual bool Equals(IWorldAccessor worldForResolve, IAttribute? attr)
         {
-            object othervalue = attr.GetValue();
-            if (!othervalue.GetType().IsArray) return false;
+            if (attr == null) return false;
 
-            IList a = (IList)value;
-            IList b = (IList)othervalue;
+            if (attr.GetValue() is not T[,] otherArray) return false;
 
-            if (a.Count != b.Count) return false;
 
-            for (int i = 0; i < a.Count; i++)
+            if (otherArray.GetLength(0) != value.GetLength(0)) return false;
+            if (otherArray.GetLength(1) != value.GetLength(1)) return false;
+
+            for (int i = 0; i < value.GetLength(0); i++)
             {
-                if (a[i] == null)
+                for (int j = 0; j < value.GetLength(1); j++)
                 {
-                    if (b[i] != null) return false;
-                }
-                else if (!a[i]!.Equals(b[i]))
-                {
-                    if (!EqualityUtil.NumberEquals(a[i], b[i])) return false;
+                    if (value[i, j] == null)
+                    {
+                        if (otherArray[i, j] != null) return false;
+                    }
+                    else if (!value[i, j]!.Equals(otherArray[i, j]))
+                    {
+                        if (!EqualityUtil.NumberEquals(value[i, j], otherArray[i, j])) return false;
+                    }
                 }
             }
 
