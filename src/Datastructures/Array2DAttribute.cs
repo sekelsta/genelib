@@ -27,9 +27,9 @@ namespace Genelib {
                     {
                         if (otherArray[i, j] != null) return false;
                     }
-                    else if (!value[i, j]!.Equals(otherArray[i, j]))
+                    else if (!value[i, j].Equals(otherArray[i, j]))
                     {
-                        if (!EqualityUtil.NumberEquals(value[i, j], otherArray[i, j])) return false;
+                        return false;
                     }
                 }
             }
