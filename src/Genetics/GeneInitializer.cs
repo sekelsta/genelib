@@ -77,6 +77,9 @@ namespace Genelib {
         }
 
         public bool CanSpawnAt(ClimateCondition climate, int y) {
+            if (climate == null) {
+                return false;
+            }
             if (climateCondition == null) {
                 return true;
             }
